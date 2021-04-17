@@ -1,0 +1,88 @@
+% "and Miss Distances"
+\chapter{Alternative FMS Failure Events}\label{sec:application_events}
+This section details alternative failure events investigated and their associated miss distance calculations.
+Ultimately, analysis of these failure events showed their inadequacy and arc length failures were selected as the primary event.
+
+\section{Tangency Kinks}
+Tangency kinks arise when a small angle threshold is exceeded between the inbound straight segment and the tangent of the turn segment at a given waypoint. The failure event occurs when this angle difference $\theta$ is above the threshold $\tau_k = 0.001$ \si{\radian}.
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.6\columnwidth}{!}{\input{diagrams/tangent-angle.tex}}
+\caption{Tangency kink failure event and miss distance.}
+\label{fig:tangency_kink}
+\end{figure}
+
+Miss distance for the tangency kinks is calculated by first determining the azimuth angle $z$ between the start point of the arc $s$ and the center point $c$. The azimuth is calculated using a WGS84 Earth flattening leveraging the Geodesic.jl\footnote{\url{https://github.com/anowacki/Geodesics.jl}} package which implements Vincenty's formula  \cite{vincenty}. The tangency angle $\theta$ is then calculated for each $\ell \in L$ where $L$ is the set of lateral packets that each have a straight segment and a turn arc with radius $r$. The sign of the radius $r$ indicates the direction of turn, where left is negative and right is positive. The course-in angle of the straight segment $\ell$ is denoted $\angle \ell$,
+% \begin{align*}
+%   U(\phi) &= \arctan((1 - f) \tan \phi))\\
+%   (U_s, U_c) &= (U(\phi_s),\, U(\phi_c))
+% \end{align*}
+%
+% \begin{align*}
+%   \lambda = \Lambda(L, f)
+% \end{align*}
+% https://github.com/anowacki/Geodesics.jl
+% 
+% \begin{align*}
+%   % https://en.wikipedia.org/wiki/Vincenty%27s_formulae#Inverse_problem
+%   % Inverse problem
+%   % 1. Vincenty, T. (1975). "Direct and Inverse Solutions of Geodesics on the Ellipsoid with application of nested equations" (PDF). Survey Review. XXIII (176): 88–93. doi:10.1179/sre.1975.23.176.88
+%   z = \arctan(\cos U_c \sin \lambda,\, \cos U_s \sin U_c - \sin U_s \cos U_c \cos \lambda)
+%   % \alpha_c = \arctan(\cos U_s \sin \lambda,\, -\sin U_s \cos U_c + \cos U_s \sin U_c \cos \lambda)
+% \end{align*}
+%
+\begin{equation*}
+  % d = \tau_k - \max\left\{ \abs{z - \angle \ell + \sign(r)\frac{\pi}{2}} : (\ell,r) \in L \right\}.
+  d = \tau_k - \max\limits_{(\ell,r) \in L} \abs{z - \angle \ell + \sign(r)\frac{\pi}{2}}.
+\end{equation*}
+
+
+\section{Course Directions}
+In-bound and out-bound course directions may deviate from one another and can be classified as a failure event.
+Closely related to the \textit{disconnection} failure event, the course direction failures can arise when two sequential lateral packets are disconnected. This failure specifically looks for angle differences between the course-out $\theta_{\text{out}}$ and course-in $\theta_\text{in}$ directions of the sequential lateral packets. If this angle difference $\omega = \abs{\theta_\text{out} - \theta_\text{in}}$ is above the threshold $\tau_c = 1\si{\degree}$ then it is classified as a failure.
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.6\columnwidth}{!}{\input{diagrams/course-direction.tex}}
+\caption{Course direction failure event and miss distance.}
+\label{fig:course_direction}
+\end{figure}
+
+Miss distance is calculated as how close to the threshold $\tau_c$ is the maximum wrapped angle difference between the course-out angle and course-in angle denoted by $\omega$, namely
+\begin{equation*}
+  % d = \tau_c - \max\left\{ \abs{\theta_\text{out} - \theta_\text{in}} : \theta_\text{out} \in L_i, \theta_\text{in} \in L_{i+1} \right\}.
+  % d = \tau_c - \max\limits_{\theta_\text{out} \in L_i, \theta_\text{in} \in L_{i+1}}\abs{\theta_\text{out} - \theta_\text{in}}.
+  d = \tau_c - \max\limits_{\substack{\theta_\text{out} \in L_i\\\theta_\text{in} \in L_{i+1}}}\abs{\theta_\text{out} - \theta_\text{in}}.
+\end{equation*}
+
+% \begin{itemize}
+%   \item Explain how tangent angle is calculated
+%   \item Talk about WGS84 flattening
+%   \item Mention Vincenty's inverse formula, Karney's inverse formula, and cite comparison paper (get papers, \textit{GEODESIC ALGORITHMS: AN EXPERIMENTAL STUDY})
+%   \item Describe all variables used ($r = \text{radius}$, etc)
+%   \item Update how the angle is calculated based on Nick's adjustments
+% \end{itemize}
+
+
+\section{Disconnections}
+Disconnected lateral packets occur when two sequential lateral packets are not connected end-to-start, thus leaving a distance $\delta$ between them. If this geodesic distance $\delta = \lVert e_i - p_{i+1} \rVert$ is above the threshold $\tau_d = 10$ \si{ft} then a failure occurred.
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.6\columnwidth}{!}{\input{diagrams/disconnection.tex}}
+\caption{Disconnected failure event and miss distance.}
+\label{fig:disconnection}
+\end{figure}
+
+Miss distance is calculated as the threshold $\tau_d$ minus the maximum distance between the end points $e_i$ (or $s_i$ if no arc is provided) and the initial point $p_{i+1}$ of the next lateral packet:
+\begin{equation*}
+  % d = \tau_d - \max\left\{ \lVert e_i - p_{i+1} \rVert : (e_i,p_{i+1}) \in L \right\}.
+  % d = \tau_d - \max\limits_{(e_i,p_{i+1}) \in L}\lVert e_i - p_{i+1} \rVert.
+  % d = \tau_d - \max\limits_{e_i \in L_i, p_{i+1} \in L_{i+1}}\lVert e_i - p_{i+1} \rVert.
+  d = \tau_d - \max\limits_{\substack{e_i \in L_i\\p_{i+1} \in L_{i+1}}}\lVert e_i - p_{i+1} \rVert
+\end{equation*}
+
+
+% We use the modified reward function that incorporates severity based on the miss distance at the time of an event.
+% For our four miss distances described above, we want to reward egregious miss distances, thus finding events that are more severe. 

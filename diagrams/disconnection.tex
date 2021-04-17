@@ -1,0 +1,39 @@
+\begin{tikzpicture}
+  [
+    scale=16, every node/.style={scale=2},
+    >=stealth,
+    point/.style = {draw, circle,  fill = black, inner sep = 1pt},
+    dot/.style   = {draw, circle,  fill = black, inner sep = .2pt},
+    latlon/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=2mm, fill=white, fill opacity=0.75, fill = black, inner sep = 0.1pt},
+    latlonstart/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=2mm, fill = black, inner sep = 0.3pt},
+    wpt/.style  = {diamond, fill=white, fill opacity=0.75},
+  ]
+ 
+  \tikzstyle{every node}=[font=\large]
+ 
+  % the circle
+  \def\unit{0.5}
+  \def\rad{0.3}
+  \def\ang{45}
+  \def\failang{7}
+  \def\inner{0.3*\rad}
+  \def\failinner{0.6*\rad}
+
+  \node (initial) at +(-\unit,\rad) [latlon, label = above:$p_1$] {};
+
+  \node (start) at +(0, \rad) [latlonstart, label = above:$s_1$] {};
+  \node [rotate=-\ang] (end) at +(\ang:\rad) [latlon, label ={[label distance=-1mm]above:$e_1$}] {};
+
+  \node (failinitial) at (0,\rad/2) [latlon, label = above:$p_2$] {};
+  \node (failstart) at ($(failinitial) + (-0.25, 0)$) [latlonstart, label = above:$s_2$] {};
+
+  \draw (start) arc (90:\ang:\rad);
+
+  \draw[-] (initial) -- node (ls) [label = {above:$\ell_1$}] {} (start);
+
+  \draw[dashed,red] (end) -- node (dist) [label={[label distance=-1mm]below:$\delta$},pos=0.45] {} (failinitial);
+  \draw[-] (failinitial) -- node (fs) [label={above:$\ell_2$}] {} (failstart);
+
+  \node (mid) at +(90-\ang/2:\rad) [draw, wpt, inner sep=1pt, rotate=90-\ang/2] {};
+
+\end{tikzpicture}

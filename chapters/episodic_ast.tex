@@ -1,0 +1,603 @@
+% \begin{abstract}  
+% To find failure events and their likelihoods in flight-critical systems, we investigate the use of an advanced black-box stress testing approach called adaptive stress testing.
+% We analyze a trajectory predictor from a developmental commercial flight management system which takes as input a collection of lateral waypoints and en-route environmental conditions.
+% Our aim is to search for failure events relating to inconsistencies in the predicted lateral trajectories.
+% The intention of this work is to find likely failures and report them back to the developers so they can address and potentially resolve shortcomings of the system before deployment. 
+% To improve search performance, this work extends the adaptive stress testing formulation to be applied more generally to sequential decision-making problems with episodic reward by collecting the state transitions during the search and evaluating at the end of the simulated rollout. 
+% We use a modified Monte Carlo tree search algorithm with progressive widening as our adversarial reinforcement learner.
+% The performance is compared to direct Monte Carlo simulations and to the cross-entropy method as an alternative importance sampling baseline.
+% The goal is to find potential problems otherwise not found by traditional requirements-based testing.
+% Results indicate that our adaptive stress testing approach finds more failures and finds failures with higher likelihood relative to the baseline approaches.
+% \end{abstract}
+
+% \begin{IEEEkeywords}
+% cyber-physical systems, adaptive stress testing, black-box, Markov decision process, Monte Carlo tree search, flight management systems.
+% \end{IEEEkeywords}
+
+
+\section{Introduction}
+\label{sec:introduction}
+
+A primary function of aircraft flight management systems (FMS) is to provide guidance in the form of navigational waypoints between origin and destination airports.
+A trajectory predictor is the subsystem that provides trajectories to the guidance subsystem that commands the autopilot.
+Failures within the trajectory prediction system can occur if the output waypoints are unreachable given the physical limitations of the aircraft, or if there are problems with the implementation or design of the software. % (e.g., edge cases leading to software crashes).
+The goal of this work is to find likely failure cases before system deployment so that the engineers can resolve or address potential problems in the system. 
+
+Traditionally, large-scale Monte Carlo testing is used to generate these failure cases \cite{monte_carlo}. However, Monte Carlo testing can be inadequate for large input spaces with rare failure events \cite{mc_limitations}.
+We investigate the use of adaptive stress testing (AST), an advanced black-box stress testing approach that has been successfully applied to find failures in safety-critical systems \cite{ast_acasx,ast_av,lee2018differential,ast_safety}. Adaptive stress testing is a method that uses reinforcement learning to adversarially search for rare failure events in sequential decision-making systems \cite{lee_thesis}. This work applies the AST approach to trajectory prediction systems to efficiently find failure events and their likelihoods.
+
+The trajectory prediction system is treated as a black-box simulator and AST controls the selection of waypoints and other environmental input parameters.
+Monte Carlo tree search (MCTS) with progressive widening is used to explore the possible trajectories and a notion of ``miss distance'' to a failure event is used to help guide the search.
+Transition probabilities between states are also used to guide the search towards the most likely failures.
+% 
+In traditional AST formulations, a sequential decision-making problem is assumed, but our open-looped trajectory predictor does not provide a sequence of decisions, but rather generates trajectories based on complete flight plans.
+We regard each waypoint in the flight plan as a step in the sequence.
+Although we can forcibly fit the problem to a strict sequential framework by calling the system with partial flight plans, this is prohibitively expensive and unnecessary.
+Instead, we collect the intermediate states and actions and only evaluate the system at the end of a simulated rollout, then back-propagate the reward to unevaluated parts of the tree.
+We can do this due to the structure of the AST reward function.
+Therefore, this work extends the AST approach to be applied more generally to sequential decision-making problems with episodic reward (i.e. rewards accumulated at the end of an episode with intermediate rewards of zero).
+
+
+We analyze a trajectory predictor from a developmental commercial FMS which takes as input winds aloft, origin and destination airports, and a collection the lateral waypoints.
+The trajectory predictor outputs the discrete-time controls that determine translational motion which would be input to the FMS.
+Within the FMS, the trajectories are passed to the guidance subsystem which determines how to command the autopilot.
+Although we focus on arc length discrepancies as the primary failure mode (described in \Cref{sec:application}), this work can be easily extended to other failure events.
+The performance of AST is compared to two baselines: direct Monte Carlo simulation and the cross-entropy method.
+Current failure assessment is performed exhaustively over a navigational database of predefined aircraft routes defined by lateral waypoints.
+This testing method is used during development while requirement-based testing is used for final system certification following RTCA DO-178C \cite{do178c}.
+The intention of testing during development is to find failures otherwise not covered by requirements-based tests.
+As a comparison of developmental testing approaches, we sample routes from the navigational database as another baseline to relate the simulation-based approach to the standard navigational database approach.
+Experiments were run to generate likely failure events that are provided to the developers of the trajectory predictor to analyze and resolve potential shortcomings of the system.
+
+
+% \section{Prior Work} \label{sec:prior_work}
+AST has been successfully applied to safety-critical systems such as aircraft collision avoidance systems  \cite{ast_acasx,lee2018differential} and autonomous vehicles \cite{ast_av}. 
+\citeauthor*{ast_traj_plan} applied AST to trajectory planning systems, but as will be discussed further in \Cref{sec:approach_ast}, that problem had access to the full FMS, thus fitting the model of traditional AST.
+They looked at runtime behavior of the FMS on a simulated aircraft, where the disturbances were added as sensor noise.
+In our work, we do not rely on simulating aircraft dynamics and use input waypoints as the disturbances.
+
+% TODO \citefull
+
+Other work has been proposed to efficiently search for failures in black-box cyber-physical systems \cite{corso2020survey}. \citeauthor*{trustworthy_ai} propose an importance sampling approach to find rare failure events to assess autonomous vehicle safety.
+Their work is similar to AST but relies on an accurate importance distribution.
+Other approaches formulate the problem of falsification as an optimization problem and solve it using Bayesian optimization \cite{bayes_opt}, simulated annealing \cite{abbas2013probabilistic,aerts2018temporal}, or rapidly-exploring random trees  \cite{rrts}.
+Each of these approaches are formulated as a classical optimization problem and use different techniques to search the input space for failures---although there is no likelihood estimation for a given falsifying input.
+A different approach altogether uses an existing set of falsifying inputs to bootstrap the search for neighboring failures \cite{bootstrap}.
+That work relies on existing counterexamples to base the neighboring search upon.
+Our work addresses falsification of sequential systems with episodic reward and includes most likely failure analysis.
+
+
+
+
+This paper is organized as follows. 
+% Section \ref{sec:prior_work} reviews prior work of safety-critical applications of AST and reviews alternative approaches to falsification of cyber-physical systems.
+Section \ref{sec:background} provides necessary background of AST and commercial aircraft FMS. Section \ref{sec:approach} describes how this work extends existing AST approaches and modifications made to the MCTS algorithm. Section \ref{sec:implementation} details the implementation of this work using the Julia programming language and provides a description of the interface for AST to interact with black-box systems. Section \ref{sec:application} describes the simulation environment constructed for the FMS application and the failure events we are searching for. Section \ref{sec:experiments} describes the experiments and discusses the analysis of the results. Lastly, \Cref{sec:conclusion} provides a discussion on the conclusions from this work.
+
+
+
+
+\section{Background} \label{sec:background}
+This section describes background of the adaptive stress testing approach and flight management systems.
+
+\subsection{Adaptive Stress Testing} \label{sec:background_ast}
+Adaptive stress testing (AST) is a black-box approach to find rare failure events in cyber-physical systems \cite{ast_acasx,lee2018adaptive}.
+The AST problem is formulated as a Markov decision process (MDP) and can be solved using reinforcement learning algorithms to guide the search towards likely failure events.
+AST can also be formulated more generally as other sequential decision-making processes, such as a partially observable Markov decision process (POMDP) \cite{ast_acasx,ast_av,ast_traj_plan}.
+
+% AST formulation (MDP)
+\begin{figure}[!ht]
+\centering
+\resizebox{0.85\columnwidth}{!}{\input{diagrams/standard-ast-formulation.tex}}
+\caption{Adaptive stress testing formulation.}
+\label{fig:ast_mdp}
+\end{figure}
+
+\Cref{fig:ast_mdp} illustrates how the AST concept is formulated.
+The system under test is treated as a black box while the simulator $\mathcal{\bar{S}}$ is treated as a gray box that passes the transition probability $p$, event indicator $e$, miss distance $d$, and termination state indicator $\tau$ to the reward function.
+The AST problem is solved using an adversarial reinforcement learner that selects a random number generator seed $\bar{a}$ to indirectly control the SUT through the simulator.
+In other types of simulators, AST could directly control input disturbances rather than seeds.
+In prior work, Monte Carlo tree search and deep reinforcement learning have been used to solve the MDP \cite{ast_acasx, ast_av}.
+The output of the AST process is a set of state trajectories deterministically controlled by a set of seeds. 
+These seeds are used to deterministically playback the simulation starting from an initial state.
+
+A necessary clarification is differentiating what is black-box with respect to the AST problem.
+Given that the simulator must provide $\langle p, e, d, \tau \rangle$ to the AST reward function, the output needs access to the transition probabilities $p$ and terminal indication $\tau$ from the environment, but can determine the event indication $e$ and miss distance $d$ from the output of the SUT.
+Thus, depending on the problem, the environment may be required to be white-box but the SUT is strictly black-box.
+
+
+
+
+The standard AST reward function is designed to guide the search towards failure events and to maximize the likelihoods of those events. It is also affected by the notion of miss distance $d$: a measure of ``closeness'' to a particular event. The miss distance helps guide the search towards failures to search efficiently. The standard reward function is given by:
+\begin{equation}\label{eq:standard_reward}
+  R(p,e,d,\tau)=\begin{cases} 
+      R_E & \text{if } \tau \wedge e \\
+      -d & \text{if } \tau \wedge \neg e\\
+      \log(p) & \text{otherwise}
+  % R(s,a,s^\prime)=\begin{cases} 
+  %     R_E & \text{if } s \in E \\
+  %     -d & \text{if } s \not\in E \wedge t \ge T \\
+  %     \log(p) & \text{if } s \not\in E \wedge t < T
+  \end{cases}
+\end{equation}
+The non-negative constant reward for finding an event is given by $R_E$ and is generally set to $0$.
+The boolean $e$ indicates when an event has been found and the boolean $\tau$ indicates that the simulation is in a terminal state.
+% The notation $e \in E$ is used to describe when an event $e$ has been found.
+% The simulation is in a terminal state when the current time $t \ge T$, where $T$ is the maximum time allowed.
+If the simulation terminates without finding an event, then the negative miss distance $-d$ is awarded to guide the search towards failure.
+Otherwise, the log-likelihood of each state transition is used, denoted by $\log(p)$.
+This term is used to maximize the likelihood of the overall trajectory and is designed to guide the search towards likely failures.
+Recall that the goal of reinforcement learning is to maximize the expected sum of rewards \cite{sutton2018reinforcement}.
+Using log-likelihood means we can maximize the summations, which is equivalent to maximizing the product of the likelihoods.
+
+
+
+\subsection{Flight Management Systems}
+Aircraft flight management systems (FMS) have been a critical part in reducing workload of pilots in commercial aircraft by contributing to in-flight automation  \cite{fms_workload}.
+Major components of FMS include flight planning, navigation, guidance, performance optimization, and trajectory prediction \cite{fms}. 
+This work focuses on the subsystem of the FMS that generates the aircraft trajectory given a flight plan.
+This subsystem, called the trajectory predictor, provides deterministic trajectories based on an operator-defined input flight plan and estimates of environmental conditions.
+Inputs include winds aloft, origin and destination airports, aircraft weight, cost index (a balance between cost of fuel and time of arrival), and a set of navigational waypoints that define the lateral route.
+For our purposes, we focus on the winds aloft, origin and destination airports, and the placement of the lateral waypoints.
+The trajectory predictor outputs the discrete-time controls that determine translational motion (i.e. both vertical and horizontal motion) which become input to the guidance subsystem of the FMS.
+The trajectories may be processed before being passed to the guidance in the cases where a change in the lateral or vertical trajectory needs to be anticipated and controlled towards.
+Therefore, the trajectory predictor is not a strictly sequential decision-making problem because the full sequence of lateral paths are deterministically constructed based solely on the inputs.
+The outputs of the trajectory predictor are illustrated in \Cref{fig:lateral_packets}.
+
+\begin{figure*}[!t]
+% Lateral packet diagram
+\centering
+\resizebox{0.78\textwidth}{!}{\input{diagrams/lateral-packet.tex}}
+\caption{Lateral packets output by the trajectory predictor. Lateral packets consist of latitude and longitude points that describe straight line segments $\ell_i$ and turning arc segments starting at $s_i$. Straight segments are optional which can result in multiple turn segments sequenced together, as seen at $s_3$ and $s_4$.}
+\label{fig:lateral_packets}
+\end{figure*}
+
+
+
+\section{Approach}
+\label{sec:approach}
+
+Several modifications were made to adapt AST for sequential decision-making systems with episodic reward.
+Modifications to the standard reward function were made to guide the search towards severe failures as well as likely failures.
+Modifications to the Monte Carlo tree search algorithm are also described; adapting the search algorithm for efficient SUT evaluations and to use progressive widening with a single deterministic next state.% (given the nature of controlling seeds).
+
+
+\subsection{Adaptive Stress Testing for Episodic Reward Problems} \label{sec:approach_ast}
+
+% Modified AST formulation (MDP)
+\begin{figure*}[!b]
+  \centering
+  \resizebox{0.95\textwidth}{!}{\input{diagrams/ast-formulation.tex}}
+  \caption{
+    \label{fig:ast_mdp_modified}
+    Modified adaptive stress testing formulation for the trajectory predictor with episodic reward. The simulation environment samples waypoints from a distribution and passes those waypoints as input to the SUT at the end of the rollout.
+    The modified reward function is guided by both the severity and likelihood of the failure event. Information on the dashed lines is only provided to the reward function when the SUT is evaluated.
+  }
+\end{figure*}
+
+Traditionally, AST is used to steer sequential decision-making systems towards likely failures by controlling the seed used to sample environmental variables within the simulator at each time step (as seen in \Cref{fig:ast_mdp}).
+The issue with applying this formulation directly to the trajectory predictor is that this system does not rely on sequential feedback to generate the trajectory and solely relies on its set of inputs. 
+Therefore, we propose a modification to the AST formulation to abstract the sequential nature of the problem to the simulation environment.
+In other words, we collect the state transitions during the search and evaluate the system at the end of the rollout.
+This distinction can be seen in \Cref{fig:ast_mdp_modified}.
+The transition probability $p$ is output from the environment and the event indication $e$, miss distance $d$, and terminal state indication $\tau$ are output from the black-box SUT, i.e. the trajectory predictor.
+% The terminal state indication $\tau$ can be determined either by the simulation environment or the SUT, depending on the application.
+The 4-tuple $\langle p, e, d, \tau \rangle$ is passed as input to the reward function and the transition probability $p$ and miss distance $d$ are used to guide the search.
+
+
+The standard AST reward function described in \Cref{eq:standard_reward} was modified to collect all rewards at the termination state and to incorporate a severity measurement when a failure event occurs.
+Both the log-likelihood and miss distance $d$ are used throughout the search.
+A multiplicative bonus $R_E$ is applied when a failure event occurs and we set $R_E=100$ for our experiments.
+The modified reward function becomes:
+\begin{equation}\label{eq:modified_reward}
+  R(p,e,d,\tau) = \begin{cases} 
+    (\log(p) - d)R_E & \text{if } \tau \wedge e \\
+    \log(p) - d & \text{if } \tau \wedge \neg e \\
+    0 & \text{otherwise}
+  \end{cases}
+\end{equation}
+The transition probability $p$ is given by the probability of sampling a set of waypoints from a multivariate Gaussian distribution $\vec{w} \overset{\bar{a}}{\sim} \Normal(\vec{\mu},\mat{\Sigma})$ composed of waypoint direction and distance (relative to the previous waypoint) and wind direction and magnitude with mean vector $\vec\mu$ and covariance $\mat\Sigma$, deterministically controlled by the seed $\bar{a}$.
+If an event is found, then the reward is the negative miss distance combined with the log-likelihood and adjusted by the multiplicative bonus $R_E$.
+This modification is used to incorporate severity of an event gauged by the miss distance when an event is found.
+If the simulation terminates without finding an event, no multiplicative bonus is applied.  
+This reward function may not be suitable for certain AST problem formulations, but in \Cref{sec:application} we discuss how these modifications are applicable for the failure event and miss distance we investigate.
+
+
+% MCTS algorithm pseudocode
+\subsection{Modified Monte Carlo Tree Search} \label{sec:mcts}
+Monte Carlo tree search (MCTS) is an anytime algorithm that uses rollouts of a random policy to estimate the value of each state-action node in the tree \cite{coulom2006efficient,dmubook}.
+MCTS has found success in recent years in the reinforcement learning field, notably playing games such as Go \cite{silver2016mastering}.
+There are four main stages in each simulation: \textit{selection}, \textit{expansion}, \textit{rollout} (or \textit{simulation}), and \textit{backpropagation}.
+\Cref{fig:mcts} illustrates these four steps.
+The algorithm is ``anytime'' because a policy can be constructed after any single iteration, but the state-action value estimates become increasingly accurate as more simulations are performed and the tree depth is expanded.
+The tree $\mathcal{T}$ is iteratively expanded and the policy improves over time as the algorithm balances exploration with exploitation of the state and action spaces. 
+
+% MCTS 4-step figure
+\begin{figure*}[!t]
+\centering
+\resizebox{\textwidth}{!}{\input{diagrams/mcts-diagram.tex}}
+\caption{The four steps of the Monte Carlo tree search algorithm.}
+\label{fig:mcts}
+\end{figure*}
+
+% MCTS-PW figure
+% \begin{wrapfigure}{r}{0.4\textwidth}
+\begin{figure}[!b]
+\centering
+\resizebox{0.5\textwidth}{!}{\input{diagrams/mcts-pw.tex}}
+\caption{MCTS-PW with a single deterministic state and system evaluations at the end of the rollout.}
+\label{fig:mcts_pw}
+% \end{wrapfigure}
+\end{figure}
+A commonly used extension of MCTS for large or continuous spaces is progressive widening (PW) \cite{chaslot2007progressive,mcts_ucb,ll_wildfire,mcts_wildfire}.
+% We apply PW on the action space of seeds, because the seed forces deterministic state transitions.
+We apply PW on the action space of seeds because there are an infinite number of seeds.
+There is no need to apply PW to the state transitions, since a seed uniquely determines the next state. 
+This notion can be seen in \Cref{fig:mcts_pw} where each action $\bar{a}_i$ leads to a single deterministic state $s_j$ as its child node.
+The states are deterministically sampled from the generative model $G$ given the current state and action.
+We define the state $s$ as a collection of all preceding actions deterministically leading to that point in the simulation.
+Note that because the state $s$ is a sequence of seeds that uniquely determines the state of the simulator $\bar{S}$, we may overload the notation when calling $\smallcaps{Evaluate}$ and $\smallcaps{IsTerminal}$ for convenience.
+In our formulation, the generative model samples state transitions and does not evaluate the underlying system (unlike standard MCTS).
+This difference is in \Cref{alg:mcts-pw-rollout}, $\smallcaps{Rollout}$, where new state transitions are generated during the rollout and the system is only evaluated at the end.
+By default, actions are uniformly selected from a random policy.
+However, to encourage exploration of promising actions, the current best action $\bar{a}^*$ is used mid-rollout.
+The best action is updated at the end of the rollout based on updated $Q$-values.
+
+
+These modifications were made to MCTS-PW specifically for episodic reward problems.
+The evaluation of our SUT is expensive so we limit the evaluations to the end of the rollout (rather than at node creation and throughout the rollout).
+This way, we can reduce the number of external system executions but still provide the search with information during tree expansion, namely using back-propagated values of the transition probabilities and the miss distance from previously finished rollouts.
+Choosing to evaluate at the end of the rollout provides the SUT with an expanded set of waypoints which it evaluates once the rollout has reached its maximum depth.
+Generally for AST problem formulations, the discount factor $\gamma$ is set to $1$.
+Algorithm \ref{alg:mcts-pw} is the entry point of MCTS-PW.
+
+\input{algorithms/mcts-pw-algorithm.tex}
+\input{algorithms/mcts-pw-algorithm-part2.tex}
+
+
+\section{Implementation}
+\label{sec:implementation}
+The AST implementation was written in the Julia programming language \cite{julia}.
+% Julia is an open-source, high-level, dynamically-typed, scientific computing language that can achieve speeds comparable to C \cite{julia}.
+Implementation of the simulation environment around the SUT was also written in Julia, but this section will focus on the algorithms required for AST and MCTS-PW.
+Modifications to MCTS were implemented and merged into the existing MCTS.jl\footnote{\url{https://github.com/JuliaPOMDP/MCTS.jl}} Julia package.
+
+
+\subsection{Interface}\label{sec:implementation_interface}
+To apply AST to a general black-box system, a user has to provide the interface defined in \Cref{tab:interface}.
+% 
+The simulation object $\bar{\mathcal{S}}$ is the user-defined data structure that holds parameters for their simulation.
+All of the following functions take the simulation object $\bar{\mathcal{S}}$ as input and can modify the object in place.
+The {\sc Initialize} function resets the simulation and the SUT to an initial state.
+The {\sc Evaluate} function executes the SUT and returns the transition probability $p$, a boolean indicating an event occurred $e$, and the miss distance $d$.
+% Three subroutines determine these output values: {\sc Transition} returns the transition probability $p$, {\sc MissDistance} returns the miss distance $d$, and {\sc IsEvent} returns the event indication $e$ (where all three subroutines are used by the {\sc Evaluate} function, but may also be called individually).
+Three subroutines determine these output values: {\sc Transition}, {\sc MissDistance}, and {\sc IsEvent} (where all three subroutines are used by the {\sc Evaluate} function, but may also be called individually).
+Finally, the {\sc IsTerminal} function returns a boolean $\tau$ to indicate if the simulation is in a terminal state.
+
+% Interface definition
+\begin{table}[!h]
+  \centering
+  \caption{\label{tab:interface} Adaptive Stress Testing Interface}
+  \begin{threeparttable}
+  \begin{tabular}{@{}p{6cm}l@{}} % wrap with @{} to remove spaces.
+    \toprule
+    \textbf{Function} & \textbf{$\bm{\text{Input}\mapsto\text{Output}}$} \\
+    \midrule
+    \textsc{Initialize} & $\bar{S} \mapsto \emptyset$ \\
+    \textsc{Evaluate} & $\bar{S} \mapsto \langle p, e, d \rangle$ \\
+    $\quad$\textsc{Transition} & $\bar{S} \mapsto p \in \mathbb{R}$ \\
+    $\quad$\textsc{MissDistance} & $\bar{S} \mapsto d \in \mathbb{R}$ \\
+    $\quad$\textsc{IsEvent} & $\bar{S} \mapsto e \in \mathbb{B}$ \\
+    \textsc{IsTerminal} & $\bar{S} \mapsto \tau \in \mathbb{B}$ \\
+    \bottomrule
+  \end{tabular}
+  \end{threeparttable}
+\end{table}
+
+
+As an example, the functions in the above interface can either be implemented directly in Julia or can call out to C++, Python, MATLAB\textsuperscript{\textregistered} or run an executable on the command line. Typically, implementing the {\sc MissDistance} and {\sc IsEvent} functions rely solely on the output of the SUT, thus keeping in accordance with the black-box formulation.
+
+% TODO. POMDPStressTesting.jl transferred to github.com/sisl
+
+\subsection{Stress Testing Julia Framework}
+We have implemented the AST interface written in Julia as part of a new package called POMDPStressTesting.jl.\footnote{\url{https://github.com/sisl/POMDPStressTesting.jl}}
+This package is inspired by work originally done in the AdaptiveStressTesting.jl\footnote{\url{https://github.com/sisl/AdaptiveStressTesting.jl}} package, but POMDPStressTesting.jl adheres to the \texttt{MDP} interface defined by the POMDPs.jl\footnote{\url{https://github.com/JuliaPOMDP/POMDPs.jl}} package  \cite{pomdps_jl}.
+Thus, POMDPStressTesting.jl fits into the POMDPs.jl ecosystem, which is why it can use the MCTS.jl package as an off-the-shelf solver.
+This design choice allows other Julia packages within the POMDPs.jl ecosystem to be used; this includes solvers, simulation tools, policies, and visualizations.
+
+
+The intention of the POMDPStressTesting.jl package is to provide the user with a virtual black-box interface they must define, and provide the necessary AST algorithms to run the search. Future modifications will focus on inclusion of benchmark falsification problems from the literature  \cite{arch_comp}.
+
+
+
+\section{Application}
+\label{sec:application}
+
+The primary goal of this work is applying the modified AST formulation to a trajectory predictor in a developmental commercial FMS.
+The following sections will describe the input and output specification of the trajectory predictor and detail the investigated failure event and the associated miss distance.
+We will also describe the simulation environment constructed to run the SUT.
+
+
+
+
+\subsection{Trajectory Predictor}
+The inputs of the trajectory predictor controlled by AST are the origin and destination airports, a set of intermediate waypoints, and the wind direction and magnitude at each waypoint.
+The output of the trajectory predictor is a detailed flight path which provides predicted vertical data, predicted lateral data (i.e. lateral packets, illustrated in \Cref{fig:lateral_packets}), and other flight path information currently unused in this application.
+The following failure event and miss distance is calculated by parsing the SUT output after each evaluation.
+
+
+% \input{failure-tangency-kink} % Non-DASC
+
+
+\begin{figure}[!hb]
+\centering
+\resizebox{0.6\columnwidth}{!}{\input{diagrams/arc-length.tex}}
+\caption{Arc length $\beta$ and calculated arc length $\alpha r$, showing a failure in red.}
+\label{fig:arc_length}
+\end{figure}
+
+\subsubsection{Arc Length Failure}
+Arc length is defined as the distance traveled across the arc from the starting point $s$ and ending point $e$, shown in \Cref{fig:arc_length}.
+Failures can arise when the arc length $\beta$ does not agree with the arc length computed using the angular extent $\alpha$ and arc radius $r$.
+Angular extent is computed as
+% \vspace{-2mm}
+\begin{equation}
+  \alpha = \sign(r) \cdot |z_s - z_e| + 2\pi
+\end{equation}
+where $z_s$ is the azimuth from the center waypoint $c$ to the starting waypoint $s$, and $z_e$ is the azimuth from the center waypoint $c$ to the ending waypoint $e$.
+The sign of $r$ determines the turn direction, where negative values represent left turns.
+A failure occurs when the calculated difference $\abs{\beta - \alpha r}$ is above the threshold $h=10$ \si{ft}. 
+
+
+
+The arc length miss distance is how close the arc length difference comes to the threshold $h$.
+We transform this difference by scaling the log-ratio of the threshold $h$ and the maximum miss distance from that trajectory.
+This way, non-positive values indicate an event.
+Namely, we define miss distance to be:
+\begin{equation} \label{eq:miss}
+  d = \rho\log\left(\frac{h}{\max\,\abs{\beta - \alpha r}}\right)
+\end{equation}
+We use a scale of $\rho=100$ to match the expected range of the log-likelihood in our problem so that the log-likelihood does not dominate the miss distance in the reward function.  
+
+% \input{failure-disconnection} % Non-DASC
+% \input{failure-course-direction} % Non-DASC
+
+\subsection{Simulation Environment}
+A simulator was constructed to sample waypoint trajectories and evaluate the SUT.
+Starting from an origin airport, waypoints were sampled from a multivariate Gaussian distribution of independent normals that encodes waypoint direction and distance (relative to the previous waypoint) and wind direction and magnitude, deterministically controlled by the seed $\bar{a}$:
+\begin{equation}
+  \vec{w} \overset{\bar{a}}{\sim} \Normal(\vec{\mu}, \vec{\Sigma})
+\end{equation}
+Mean and variance values for the waypoint direction and distance were set by a domain expert and the values for winds aloft were learned from observational weather data.
+\begin{gather*}
+\vec{\mu} = \left[180\,\si{\degree},\; 50\,\si{nmi},\; -88.5\si{\degree},\; 66.8\,\si{kts}\right]\\
+\mat{\Sigma} = \begin{bmatrix}
+45\si{\degree} & 0 & 0 & 0\\
+0 & 30\,\si{nmi} & 0 & 0\\
+0 & 0 & 39.5\si{\degree} & 0\\
+0 & 0 & 0 & 24.4\,\si{kts}
+\end{bmatrix}
+\end{gather*}
+
+The simulator implements the interface defined in \Cref{sec:implementation_interface} for the trajectory predictor.
+The failure event and miss distance calculations described in \Cref{sec:application} were also implemented within the simulator.
+
+\subsection{Navigational Database}
+In addition to the simulator, we have access to a navigational database of aircraft routing procedures.
+The routes are encoded as collections of waypoints describing departure, arrival, and en-route airways.
+Exhaustively searching all combinations of the waypoints in the navigational database is the current approach to finding failures during development.
+We employ the navigational database as a baseline by sampling the same allotted number of SUT evaluations to assess the miss distance distribution and search for failures.
+
+
+
+\section{Experiments}
+\label{sec:experiments}
+Experiments were run to test the AST approach using MCTS-PW against direct Monte Carlo (MC) simulations as a na\"ive baseline and the cross-entropy method as an importance sampling baseline.
+We also perform Monte Carlo sampling over the routes in the navigational database as another baseline.
+Algorithm \ref{alg:mc} describes the direct Monte Carlo simulation approach for $n$ episodes, starting at an initial state $s_0$, with a rollout depth $d$. Note the rollout function does not use the action feeding procedure described in \Cref{sec:mcts}.
+
+\input{algorithms/monte-carlo-algorithm.tex}
+
+
+
+The cross-entropy method (CEM) is a probabilistic optimization technique that iteratively fits an initial distribution to elite samples \cite{rubinstein1999cross,rubinstein2004cross}.
+The method uses importance sampling, which introduces a proposal distribution over rare events to sample from then re-weights the posterior likelihood by the \textit{likelihood ratio} of the true distribution ($\vec w$ in our case) over the proposal distribution.
+The idea is to artificially make failure events less rare under the newly fit proposal distribution.
+We set the proposal distribution to be the same as the true distribution $\vec w$, with the exception that the waypoint distance was reduced to $\mu=1\,\si{nmi}$ and $\sigma=3\,\si{nmi}$ to encourage smaller distances between the waypoints.
+
+
+
+For the experiments, the San Francisco International Airport (KSFO) was used as an origin airport and the Los Angeles International Airport (KLAX) was used as a destination airport. 
+Comparisons were run to assess the effectiveness of AST against CEM and direct MC in finding high-likely severe failure events. 
+Metrics include the number of failure events found $N_E$, iteration of first failure $i_{FF}$, and statistics about the miss distance.
+We also report the mean log-likelihood of failures found by each algorithm relative to the mean log-likelihood of failures found by the direct MC approach.
+For a given algorithm, this is computed as:
+\begin{equation}
+ \operatorname{rel-log}(p) = \frac{\log(p_{\text{alg}})}{\log(p_\text{MC})}
+\end{equation}
+Values larger than one indicate a higher relative likelihood.
+% 
+
+\begin{table}[!ht]
+  \centering
+  \caption{\label{tab:mcts_params} Algorithm Hyperparameters}
+  \begin{threeparttable}
+  \begin{tabular}{@{}p{10cm}r@{}}
+    \toprule
+    \textbf{Hyperparameter} & \textbf{Value} \\
+    \midrule
+    episodes \tnote{*} & $5000$ \\
+    maximum tree depth $d_\text{max}$ (i.e. number of waypoints) \tnote{*} & $12$ \\
+    rollout depth $d$ \tnote{$\dagger$} & $12$ \\
+    exploration constant $c$ & $10$ \\
+    progressive widening $k$ & $10$ \\
+    progressive widening $\alpha$ & $0.3$ \\
+    \bottomrule
+  \end{tabular}
+  \begin{tablenotes}
+      \item[*] {Used by all algorithms.}
+      \item[$\dagger$] {Used by MCTS and direct Monte Carlo.}
+  \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+
+All experiments were run with the MCTS hyperparameters listed in \Cref{tab:mcts_params}.
+Sensitivity analysis of the various hyperparameter values has been omitted from this paper for brevity.
+When controlling the parameters for progressive widening, to encourage widening let $k \to \infty$ and $\alpha \to 1$. To discourage widening, let $k \to 1$ and $\alpha \to 0$.
+
+
+\subsection{Results and Analysis}
+
+We first look at the performance of each approach over all episodes.
+An initial seed is set across each experiment and we run each algorithm for 5000 episodes.
+For each of these approaches, the number of episodes also corresponds to the number of SUT evaluation calls.
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.8\columnwidth}{!}{\input{figures/episodic_ast/episode-figures.pgf}}
+\caption{Running miss distance mean, minimum miss distance, and log-scaled cumulative number of failure events across episodes. One standard deviation is reported in the shaded regions.}
+\label{fig:episodes}
+\end{figure}
+
+The first two plots in \Cref{fig:episodes} show the running mean and minimum miss distance over each episode.
+Notice that the direct Monte Carlo approach applied to the navigational database baseline converges quickly to a minimum miss distance that remains above the rest, and a running mean that only outperforms the CEM approach.
+% 
+Evident from \Cref{fig:episodes} is the initial behavior that MCTS and direct Monte Carlo share.
+Recall that MCTS balances exploration and exploitation, and initially acts similar to direct Monte Carlo.
+This similarity is based on the choice of exploration hyperparameters and the miss distance in the reward function.
+This behavior suggests that the miss distance for this problem is a noisy measurement of the actual distance to a failure event.
+At about episode 500, the MCTS approach starts to exploit found failures which can be seen as the descent of the running mean passing the origin (i.e. the event horizon).
+
+
+One goal of the AST approach using MCTS is to exploit known failures to maximize their likelihood.
+The bottom plot in \Cref{fig:episodes} shows the cumulative number of failure events which highlights this behavior.
+Notice that each approach finds failures relatively early in the search, suggesting that failure events may be common given the choice of simulation environment.
+
+
+\begin{figure}[ht!]
+\centering
+\resizebox{0.79\columnwidth}{!}{\input{figures/episodic_ast/distribution-figures.pgf}}
+\caption{Distribution of negative miss distances for all episodes (where values to the right of the origin are events) and distribution of log-likelihoods filtered by failure events.}
+\label{fig:distributions}
+\end{figure}
+
+We are also interested in the distribution of the miss distances collected from each approach.
+Recall that the miss distance $d$ is a transformation of the arc length discrepancy relative to a threshold, detailed in \Cref{eq:miss}.
+Thus, the value for $d$ is unitless and non-positive values indicate an event.
+The top plot of \Cref{fig:distributions} shows the miss distance distributions, indicating the event horizon at the origin.
+The miss distance distribution from the navigational database is used as a proxy for miss distance distributions we would expect in the real-world.
+The CEM approach converges to a local minima and stays there, which is evident in the concentration of the CEM miss distance distribution.
+MCTS and the direct MC approach share similar distributions to the left of the event horizon (indicating non-failure events), further suggesting that the miss distance is a noisy measurement of the true distance to a failure.
+The spike to the right of the origin is the distribution of failure events found by our AST approach using MCTS.
+The bottom plot in \Cref{fig:distributions} shows the distribution of log-likelihoods filtered for the failure events, suggesting that AST finds failures with higher likelihood than the CEM approach.
+
+
+
+The collected aggregate results are shown in \Cref{tab:results}.
+AST finds failures with relative likelihood about an order of magnitude greater than that of direct Monte Carlo.
+The CEM approach finds a small number of failures with very low relative likelihood.
+This is because CEM is using importance sampling and after re-weighting the samples using the true distribution, we would expect to get these extremely small likelihood values.
+% This emphasizes the case of CEM strictly for falsification and not for most likely failure analysis.
+AST has the lowest mean miss distance $\bar{X}_d$, noting the large standard deviation which is a result of large differences between miss distances from failure and non-failure events.
+Each approach finds their first failure early in the experiment, with AST finding failures the earliest.
+The effect of feeding the best action midway through the rollout accelerates finding these failures.
+Once found, AST will exploit the failures to maximize their likelihood.
+We see that AST finds failures in about $88\%$ of episodes (i.e. system executions), where as standard MC and CEM find failures in about $0.1\%$ and $0.48\%$ of episodes, respectively.
+% This suggests that these failures can be found randomly, but AST will try to exploit the failures to maximize their likelihood.
+
+
+
+
+\begin{table}[!ht]
+  \centering
+  \caption{\label{tab:results} Experimental Results}
+  \begin{threeparttable}
+  \begin{tabular}{@{}lrrrrr@{}}
+    \toprule
+    Algorithm\tnote{*} & $N_E$ & $i_{FF}$ & $\bar{X}_d$ & $\min(d)$ & $\operatorname{rel-log}(p)$\tnote{$\dagger$}\\
+    \midrule
+    $\text{MC}_\text{NavDB}$ & $0$          & ---        & $560.21 \pm75.09$       & $410.98$         & ---\\
+    MC                       & $5$          & $128$        & $407.44 \pm64.85$       & $-1127.7$      & $1.0$\\
+    CEM                      & $24$         & $249$        & $625.65 \pm97.80$        & $-1077.3$      & $4.5\times 10^{-161}$\\
+    $\text{AST}_\text{MCTS}$ & $\bm{4394}$ & $\bm{61}$ & $\bm{-923.49 \pm497.4}$ & $\bm{-1147.9}$ & $\bm{13.1}$\\
+    \bottomrule
+  \end{tabular}
+  \begin{tablenotes}
+      \item[*] {Hyperparameters listed in \Cref{tab:mcts_params}.}
+      \item[$\dagger$] {Mean log-likelihood relative to direct Monte Carlo.}
+  \end{tablenotes}
+  \end{threeparttable}
+\end{table}
+
+
+
+
+\subsection{Example Failure}
+Many of the failures are a result of two duplicate waypoints being generated in sequence.
+Based on the defined environmental distributions, this is possible, but unlikely.
+We observed that duplicate waypoints do not always cause failures and that certain assemblages of neighboring waypoints affect whether a failure is caused by the duplicates.
+Despite failures arising from these duplicate waypoints, certain failures found only by AST have waypoints close in range to each other---not necessarily identical---which can also result in arc length failures. 
+\Cref{fig:example_failure} shows an example failure trajectory and \Cref{fig:example_failure_zoomed} zooms in on the specific arc length failure.
+Refer to the figure captions for further descriptions.
+A set of failure trajectories was generated and provided to the engineers of the trajectory predictor.
+These failures are encoded in input files than can be deterministically played back through the system.
+
+
+\begin{figure}[t!]
+\noindent\makebox[\columnwidth][c]{%
+\begin{minipage}{1.25\columnwidth}
+\centering
+\resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure.pgf}}
+\end{minipage}}
+\caption{Full trajectory of an example arc length failure originating from KSFO. Red diamonds indicate the input waypoints selected by MCTS and the yellow circles indicate the output lateral packets from the SUT. The red box shows where the failure occurs, shown in more detail in \Cref{fig:example_failure_zoomed}.}
+\label{fig:example_failure}
+\end{figure}
+
+\begin{figure}[b!]
+\noindent\makebox[\columnwidth][c]{%
+\begin{minipage}{1.25\columnwidth}
+\centering
+\resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure-zoomed.pgf}}
+\end{minipage}}
+\caption{Example arc length failure, zoomed in from \Cref{fig:example_failure}. Notice two almost identical red waypoint diamonds, which are separated by about 0.08 \si{nmi} or about 486 \si{ft} (zoom in further for more detail). The arc length failure is shown as the extending arc after the center yellow waypoint, which extends about 3 \si{nmi} past its intended end waypoint. This extension is the negative miss distance.}
+\label{fig:example_failure_zoomed}
+\end{figure}
+
+% \section{Future Work}
+% \label{sec:future_work}
+% Incorporating a search over origin/destination airports, winds aloft, aircraft weight, and cost index will be explored.
+% Updates to the developmental trajectory predictor will need to be made for these inputs to be registered.
+% An extension of this work would include failure events for predicted altitude constraints.
+% An interesting research question to be explored is how to incorporate the notion of multi-event search balancing into a single search.
+% Standard AST can be applied to the full FMS as well, without having to target the trajectory predictor itself, similar to work done previously \cite{ast_traj_plan}.
+
+
+
+Due to the nature of exploiting known failures, certain failure cases may only have minor differences between them.
+To assess the impact of the trajectory predictor failures on broader flight operations, each failure case would have to be evaluated on the full FMS in simulation.
+This would include modeling aircraft dynamics, guidance systems, and control feedback. 
+Full assessment of the trajectory predictor failures would help inform the system developers in their decision to mitigate issues before deployment.
+Further extensions of this work include searching for other failure events and stress testing other components of the FMS.
+
+
+\pagebreak
+
+
+\section{Conclusion}
+\label{sec:conclusion}
+Adaptive stress testing was extended for sequential systems with episodic reward to find likely failures in FMS trajectory predictors.
+To improve search performance, we used Monte Carlo tree search with progressive widening and modified the rollout with end-of-depth evaluations.
+We feed the best action midway through the rollout to encourage exploration of promising actions, resulting in exploiting failures to maximize their likelihood. 
+A simulation environment was constructed to evaluate the trajectory predictor, and a navigational database was sampled to compare to existing methods of finding failures during development.
+Performance of AST using MCTS-PW was compared against direct Monte Carlo simulations and the cross-entropy method.
+Results suggest that the AST approach finds more failures with both higher severity and higher relative likelihood.
+The failure cases are provided to the system engineers to address unwanted behaviors before system deployment.
+In addition to requirements-based tests, we show that AST can be used for confidence testing during development.
+
+
+\section*{Acknowledgments}
+The authors would like to thank GE's Global Research Center and GE Aviation for supporting this work through the Stanford Center for AI Safety.
+We also thank the NASA AOSP System-Wide Safety Project for partially supporting this work.
+The authors will also like to thank Nicholas Visser and Joachim Hochwarth for their contributions.
+We thank Anthony Corso and Mark Koren for their feedback and the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package.
+We would also like to thank Mark Darnell, Scott Edwards, and Andrew Foster for their technical support.

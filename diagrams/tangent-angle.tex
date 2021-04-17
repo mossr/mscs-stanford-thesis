@@ -1,0 +1,83 @@
+\begin{tikzpicture}
+  [
+    scale=16, every node/.style={scale=2},
+    >=stealth,
+    point/.style = {draw, circle,  fill = black, inner sep = 1pt},
+    dot/.style   = {draw, circle,  fill = black, inner sep = .2pt},
+    latlon/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=2mm, fill=white, fill opacity=0.75, fill = black, inner sep = 0.1pt},
+    latlonstart/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=2mm, fill = black, inner sep = 0.3pt},
+    wpt/.style  = {diamond, fill=white, fill opacity=0.75},
+  ]
+
+  \tikzstyle{every node}=[font=\Large]
+ 
+  % the circle
+  \def\unit{0.5}
+  \def\rad{0.3}
+  \def\ang{45}
+  \def\failang{7}
+  \def\inner{0.3*\rad}
+  \def\failinner{0.6*\rad}
+
+  \node (origin) at (0,0) [point, label = {below:$c$}]{};
+
+  \node (initial) at +(-\unit,\rad) [latlon, label = above:$p$] {};
+  \node [rotate=-\failang] (failstart) at +(0, \rad) [latlonstart, red] {};
+  \draw[red, rotate around={-\failang:(failstart)}] (failstart) arc (90:\ang:\rad);
+
+  \node (start) at +(0, \rad) [latlonstart, label = above:$s$] {};
+  \node [rotate=-\ang] (end) at +(\ang:\rad) [latlon, label ={[label distance=-1mm]above:$e$}] {};
+  \node [rotate around={-\failang:(start)}] (failend) at +(\ang:\rad) [rotate=-\ang, latlon,red] {};
+
+  \node (failorigin) at (0,0) [point, red, rotate around={-\failang:(start)}]{};
+
+  \draw (start) arc (90:\ang:\rad);
+
+  \draw[-] (initial) -- node (ls) [label = {above:$\ell_1$}] {} (start);
+
+  \draw[dotted,thick,->] (start) -- node (tangent) [label={[label distance=-2.8mm,text=red, xshift=6.5mm, yshift=0.5mm]below right:\large$\theta$}] {} (1.25*\rad,\rad);
+
+
+  \draw[dashed]
+    ($ (origin) ! 1 ! (start) $)
+    -- ($(start) ! 1 ! (origin)$ )
+    node (center) [right,label={[pos=0.35]right:$r$}] {};
+
+  \draw[dashed]
+    ($ (origin) ! 1 ! (end) $)
+    -- ($(end) ! 1 ! (origin)$ )
+    node [right] {};
+
+  \draw[dotted,thick, red]
+    ($ (failorigin) ! 1 ! (start) $)
+    -- ($(start) ! 1 ! (failorigin)$ )
+    node (center) [right] {};
+
+  \draw[dotted,thick, red]
+    ($ (failorigin) ! 1 ! (failend) $)
+    -- ($(failend) ! 1 ! (failorigin)$ )
+    node [right] {};
+
+  \draw[->, rotate around={\ang:(end)}] (end) -- node (nextstraight) [very near end, label = {above:$\ell_2$},] {} (end |-, 0);
+  \draw[red, ->, rotate around={\ang-\failang:(failend)}] (failend) -- node (failnextstraight) [red] {} (failend |-, 0);
+  \draw [red] (1.25*\rad*5.06/7,\rad) arc (0:-\failang*5.06/7:1.25*\rad); % "fail" angle (i.e. kink)
+  \draw[dotted,thick,->,red, rotate around={-\failang:(start)}] (start) -- node (fail) [] {} (1.25*\rad,\rad);
+
+  % Right angle symbols
+  \def\ralen{.2ex}  % length of the short segment
+  \foreach \inter/\first/\last in {start/origin/tangent} % , end/origin/nextstraight
+    {
+      \draw let \p1 = ($(\inter)!\ralen!(\first)$), % point along first path
+                \p2 = ($(\inter)!\ralen!(\last)$),  % point along second path
+                \p3 = ($(\p1)+(\p2)-(\inter)$)      % corner point
+            in
+              (\p1) -- (\p3) -- (\p2)               % path
+              ;
+    }
+
+  \draw [dashed] (0, \inner) arc (90:\ang:\inner);
+  \node (innerangle) at +(90-\ang+\ang/1.4:\inner) [label = {[label distance=-3mm]above right:$\alpha$}] {};
+
+  \node (mid) at +(90-\ang/2:\rad) [draw, wpt, inner sep=1pt, rotate=90-\ang/2] {};
+
+\end{tikzpicture}

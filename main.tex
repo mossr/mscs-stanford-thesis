@@ -1,0 +1,93 @@
+% Stanford University PhD thesis style -- modifications to the report style
+% This is unofficial so you should always double check against the
+% Registrar's office rules
+% See http://library.stanford.edu/research/bibliography-management/latex-and-bibtex
+% 
+% Example of use below
+% See the suthesis-ms-2e.sty file for documentation
+%
+\documentclass{report}
+\usepackage{suthesis-ms-2e}
+\dept{Computer Science}
+
+\input{preamble/preamble}
+
+% \usetikzlibrary{external}
+% \tikzexternalize[prefix=figures/weakness_rec]
+
+% TODO: Combine into one `references.bib`
+\addbibresource{references/cem_variants.bib}
+\addbibresource{references/episodic_ast.bib}
+\addbibresource{references/weakness_rec.bib}
+\addbibresource{references/pomdpstresstesting.bib}
+
+
+\begin{document}
+\title{Algorithms for efficient validation of black-box systems}
+\author{Robert John Moss}
+\principaladviser{Mykel J. Kochenderfer}
+\firstreader{Dorsa Sadigh}
+
+\beforepreface
+\prefacesection{Preface}
+This thesis tells you all you need to know about...
+\prefacesection{Acknowledgments}
+I would like to thank...
+\afterpreface
+
+\chapter{Introduction}
+\input{chapters/introduction}
+
+% Cross-Entropy Method Variants for Optimization
+\chapter{Cross-Entropy Surrogate Method} % TODO: change
+\input{chapters/cem_variants}
+
+\chapter{Episodic Adaptive Stress Testing}
+\input{chapters/episodic_ast}
+
+\chapter{Adversarial Weakness Recognition}
+\input{chapters/weakness_rec}
+
+% POMDPStressTesting.jl: Adaptive Stress Testing for Black-Box Systems
+\chapter{POMDPStressTesting.jl}
+\input{chapters/pomdpstresstesting}
+
+\chapter{Conclusions}
+...
+
+\appendix
+\input{appendices/episodic_ast_appendix}
+
+% \bibliographystyle{plain}
+% \bibliography{cem_variants}
+\printbibliography
+
+
+\end{document}
+
+% TODO:
+% [ ] combine references.bib
+% [x] See Dorsa notes
+% [ ] See Mykel notes
+% [ ] Subsections for tooling: CrossEntropyVariants.jl and FailureRepresentation.jl
+% [ ] Combine Acknowledgments
+% [ ] Flow together chapters
+% [x] "dissertation" wording in the signatures page
+% [x] Remove "graduate studies" committee?
+
+
+% Mykel notes:
+% [x] Concatenate research papers from MS (if they're related work / extensions)
+% [ ] Add introduction
+% [ ] Flow together body chapters
+% [ ] Remove redundancies between them
+% [ ] Change conclusions/future work into discussion
+% - Two big things:
+%     [ ] 1) intro chapter
+%         - shortest intro chapter possible (concise)
+%         - "freshman undergrad could understand contributions"
+%     [ ] 2) final chapter
+%         [ ] one section "Summary" high level, no jargon, no non-sense
+%         [ ] second section "Contributions", summarize how you've supported your claims (back references, specialized terminology)
+%         [ ] third: future work
+% https://www2.eecs.berkeley.edu/Pubs/Theses/

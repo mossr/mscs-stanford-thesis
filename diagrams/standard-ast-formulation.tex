@@ -1,0 +1,45 @@
+\begin{tikzpicture}
+  [
+    node distance=1.5cm,
+    every node/.style={font=\large},
+    align=center
+  ]
+      \tikzset{
+        >={Latex[width=2mm,length=2mm]},
+        base/.style = {rectangle, rounded corners, draw=black,
+                       minimum width=1cm, minimum height=1cm,
+                       text centered},
+        block/.style = {base, minimum width=2.5cm, minimum height=1.5cm},
+        envstyle/.style = {block, fill=red!15},
+        sutstyle/.style = {block, fill=gray!50}, % fill=blue!10
+        simstyle/.style = {base, thick, fill=gray!15, minimum width=4cm},
+        metasimstyle/.style = {base, line width=0.07cm, fill=orange!80!gray!40, minimum width=4cm},
+        learnerstyle/.style = {block, fill=red!15}, %blue!20 gray!15
+        rewardstyle/.style = {block, fill=white}, %green!70!gray!20 %gray!15
+        componentstyle/.style = {block, fill=white}, %white
+        aircraftstyle/.style = {block, draw=none, fill=brown!50!red!30},
+        casstyle/.style = {block, fill=orange!50},
+    }
+    \pgfdeclarelayer{metasimlayer}
+    \pgfdeclarelayer{simlayer}
+    \pgfdeclarelayer{inputlayer}
+    \pgfdeclarelayer{blackboxlayer}
+    \pgfsetlayers{metasimlayer,simlayer,blackboxlayer,inputlayer,main}
+
+    \node (wptdist) [componentstyle] {Environment};
+    \node (sut) [sutstyle, right=0.5cm of wptdist] {System\\Under Test};
+
+    \begin{pgfonlayer}{simlayer}
+        \path let \p1=(wptdist.north west), \p2=(sut.south east) in node (sim) [fit={($(\x1,\y1)+(-0.5cm,1.25cm)$) ($(\x2,\y2)+(0.5cm,-0.5cm)$)},simstyle,line width=0.08cm]{};
+        \node at ($(sim.north west)+(2cm,-7mm)$) [font={\LARGE}] {Simulator $\mathcal{\bar{S}}$};
+    \end{pgfonlayer}
+
+    \node (learner) [learnerstyle, above left=0.25cm and 7.25cm of sim.west,xshift=0cm] {Reinforcement\\Learner};
+    \node (reward) [rewardstyle, below=1cm of learner,xshift=0cm] {Reward\\Function};
+
+    \draw[->] (learner) -- (sim.west |- learner) node[pos=0.5,above]{seed $\bar{a}$};
+    \draw[->] (reward.north) -- (learner.south) node[pos=0.5,right]{reward $r$}; % DIFF: Changed from "right" to "left"
+    % \draw[<-] (reward) -| (reward -| sim.south) node[pos=0.5,above]{transition probability $p$,\\event $e$, miss distance $d$};
+    % \draw[<-] (reward) -| (sim.south) node[pos=0.25,above]{transition probability $p$,\\event $e$, miss distance $d$};
+    \draw[<-] (reward) -- (sim.west |- reward) node[pos=0.5,above]{terminal $\tau$,\\transition probability $p$,\\event $e$, miss distance $d$};
+\end{tikzpicture}

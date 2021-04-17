@@ -1,0 +1,13 @@
+% 
+\begin{algorithm}[!ht]
+  \caption{Top-level Monte Carlo tree search algorithm.} 
+  \label{alg:mcts-pw}
+  \begin{algorithmic}
+  \Function{MonteCarloTreeSearch$(s, d)$}{}
+  \Loop {}
+    \State \textproc{Simulate}$(s,d)$
+  \EndLoop
+  \State \Return $\argmax_{\bar{a} \in A(s)} Q(s, \bar{a})$
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}

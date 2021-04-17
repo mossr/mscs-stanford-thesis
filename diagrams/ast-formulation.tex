@@ -1,0 +1,52 @@
+\begin{tikzpicture}
+  [
+    node distance=1.5cm,
+    every node/.style={font=\large},
+    align=center
+  ]
+      \tikzset{
+        >={Latex[width=2mm,length=2mm]},
+        base/.style = {rectangle, rounded corners, draw=black,
+                       minimum width=1cm, minimum height=1cm,
+                       text centered},
+        block/.style = {base, minimum width=2.5cm, minimum height=1.5cm},
+        envstyle/.style = {block, fill=red!15},
+        sutstyle/.style = {block, fill=gray!50}, % fill=blue!10
+        simstyle/.style = {base, thick, fill=gray!15, minimum width=4cm},
+        metasimstyle/.style = {base, line width=0.07cm, fill=orange!80!gray!40, minimum width=4cm},
+        learnerstyle/.style = {block, fill=red!15}, %blue!20 gray!15
+        rewardstyle/.style = {block, fill=white}, %green!70!gray!20 %gray!15
+        componentstyle/.style = {block, fill=white}, %red!15 %white
+        aircraftstyle/.style = {block, draw=none, fill=brown!50!red!30},
+        casstyle/.style = {block, fill=orange!50},
+    }
+    \pgfdeclarelayer{metasimlayer}
+    \pgfdeclarelayer{simlayer}
+    \pgfdeclarelayer{inputlayer}
+    \pgfdeclarelayer{blackboxlayer}
+    \pgfsetlayers{metasimlayer,simlayer,blackboxlayer,inputlayer,main}
+
+    \node (wptdist) [componentstyle] {Waypoint Distribution\\$\vec{w} \overset{\bar{a}}{\sim} \mathcal{N}(\vec{\mu},\mat{\Sigma})$};
+    \node (sut) [sutstyle, below right=1cm and -0.5cm of wptdist] {Trajectory Predictor\\ (Black-box SUT)};
+
+    \draw[->,dotted,line width=1pt] (wptdist) -| ($(sut.north)+(-5mm,0mm)$) node[pos=0.725,right,align=left]{{\sc Rollout$(s,d)$}\\then\\{\sc Evaluate$(\vec{w})$}};
+
+    \begin{pgfonlayer}{simlayer}
+        \path let \p1=(wptdist.north west), \p2=(sut.south east) in node (sim) [fit={($(\x1,\y1)+(-4cm,1.25cm)$) ($(\x2,\y2)+(1.3cm,-0.5cm)$)},simstyle,line width=0.08cm]{};
+        \node at ($(sim.north west)+(2cm,-7mm)$) [font={\LARGE}] {Simulator $\mathcal{\bar{S}}$};
+    \end{pgfonlayer}
+
+    \draw[->,dashed,line width=0.5pt] (wptdist.south) |- ($(sim.west)+(0mm,-1cm)$) node[pos=0.5,xshift=-3cm,above]{transition probability $p$};
+    \draw[->,dashed,line width=0.5pt] (sut) -- (sut -| sim.west) node[pos=0.5,below]{event $e$, miss distance $d$, terminal $\tau$};
+
+    \node (learner) [learnerstyle, above left=1.25cm and 4.5cm of sim.west,xshift=0cm] {Monte Carlo Tree Search\\with Progressive Widening};
+    \node (reward) [rewardstyle, below=1.35cm of learner,xshift=0cm] {Reward Function\\[1mm]$R(p,e,d,\tau) = \begin{cases} 
+    (\log(p) - d)R_E & \text{if } \tau \wedge e \\
+    \log(p) - d & \text{if } \tau \wedge \neg e \\
+    0 & \text{otherwise}
+    \end{cases}$};
+
+    \draw[->] (learner) -- (sim.west |- learner) node[pos=0.5,above]{seed $\bar{a}$};
+    \draw[->] (reward.north) -- (learner.south) node[pos=0.5,right]{reward $r$};
+    \draw[<-] (reward) -- (reward -| sim.west) node[pos=0.5,above]{$\langle p,e,d,\tau \rangle$};
+\end{tikzpicture}

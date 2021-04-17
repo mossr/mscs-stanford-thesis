@@ -1,0 +1,89 @@
+% \vspace{-2.5mm}
+\begin{algorithm}[!ht]
+  \caption{Monte Carlo tree search simulation.} 
+  \label{alg:mcts-pw-simulate}
+  \begin{algorithmic}
+  \Function{Simulate$(s, d)$}{}
+  \If {$d=0$}
+    \State \Return $0$
+  \EndIf
+  \If {$s \not\in \mathcal{T}$}
+    \State $\mathcal{T} \leftarrow \mathcal{T} \cup \{s\}$
+    \State $N(s) \leftarrow N_0(s)$
+    \State \Return \textproc{Rollout}$(s,d)$
+  \EndIf
+  \State $N(s) \leftarrow N(s) + 1$
+  \State $\bar{a} \leftarrow \textproc{SelectAction}(s)$ \algorithmiccomment{selection}
+  \State $(s^\prime, r) \leftarrow \textproc{DeterministicStep}(s,\bar{a})$ \algorithmiccomment{expansion}
+  \State $q \leftarrow r + \gamma \textproc{Simulate}(s^\prime, d-1)$ \algorithmiccomment{simulation/rollout}
+  \State $N(s,\bar{a}) \leftarrow N(s,\bar{a})+1$
+  \State $Q(s,\bar{a}) \leftarrow Q(s,\bar{a})+\frac{q-Q(s,\bar{a})}{N(s,\bar{a})}$ \algorithmiccomment{backpropagation}
+  \State \Return $q$
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+%
+% \vspace{-2.5mm}
+\begin{algorithm}[!ht]
+  \caption{Modified rollout with end-of-depth evaluation.}
+  \label{alg:mcts-pw-rollout}
+  \begin{algorithmic}
+  \Function{Rollout$(s,d)$}{}
+  \If {$d = 0$}
+    \State $(p, e, d) \leftarrow \textproc{Evaluate}(s)$
+    \State $\tau \leftarrow \textproc{IsTerminal}(s)$
+    % \State $(\bar{a},s^\prime) \leftarrow \textproc{Evaluate}(s)$
+    \State $\bar{a}^* \leftarrow \textproc{UpdateBestAction}(s,Q)$
+    \State \Return $R(p,e,d,\tau)$
+    % \State \Return $R(s,\bar{a},s^\prime)$
+  \ElsIf {$d = \floor{d_\text{max}/2}$}
+    \State $\bar{a} \leftarrow \bar{a}^*$ \algorithmiccomment{feed best action}
+  \Else
+    % \State $\bar{a} \sim \mathbb{U}$ \algorithmiccomment{sample seed uniformly}
+      \State $\bar{a} \leftarrow \textproc{SampleAction}(s,Q)$
+  \EndIf
+  \State $(s^\prime, r) \sim G(s,\bar{a})$
+  \State \Return $r + \gamma$ \textproc{Rollout}$(s^\prime,d-1)$
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+%
+\begin{algorithm}[!ht]
+  \caption{Action selection with progressive widening.}
+  \label{alg:mcts-pw-action-widen}
+  \begin{algorithmic}
+  \Function{SelectAction$(s)$}{}
+  \If {$| A(s) | \le kN(s)^\alpha$}
+    \State $\bar{a} \leftarrow \textproc{SampleAction}(s,Q)$
+    % \State $\bar{a} \sim \mathbb{U}$ \algorithmiccomment{sample seed uniformly}
+    \State $(N(s,\bar{a}), Q(s,\bar{a})) \leftarrow (N_0(s,\bar{a}), Q_0(s,\bar{a}))$
+    \State $A(s) \leftarrow A(s) \cup \{\bar{a}\}$
+  \EndIf
+  \State \Return $\argmax_{\bar{a} \in A(s)} Q(s,\bar{a}) + c\sqrt{\frac{\log N(s)}{N(s,\bar{a})}}$
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}
+%
+\begin{algorithm}[!ht]
+  \caption{Single deterministic next state.} 
+  \label{alg:mcts-pw-deterministic-state}
+  \begin{algorithmic}
+  \Function{DeterministicStep$(s,\bar{a})$}{}
+  \If {$N(s,\bar{a},\cdot) = \emptyset$}
+    \State $(s^\prime, r) \sim G(s,\bar{a})$
+    % \State $R(s,\bar{a},s^\prime) \leftarrow r$
+    \State $\textproc{SetCache}(s, \bar{a}, s^\prime, r)$
+    \State $N(s,\bar{a},s^\prime) \leftarrow N_0(s,\bar{a},s^\prime)$
+  \Else
+    % \State $s^\prime \leftarrow \arg_{s^\prime} N(s,\bar{a},\cdot)$
+    % \State $(s^\prime, r) \leftarrow (\textproc{CachedNextState}(s,\bar{a}), R(s,\bar{a},s^\prime))$
+    % \State $(s^\prime, r) \leftarrow \textproc{CachedNextState}(s,\bar{a})$
+    \State $(s^\prime, r) \leftarrow \textproc{GetCache}(s,\bar{a})$
+    % \State $s^\prime \leftarrow (\cdot)$
+    % \State $r \leftarrow R(s,\bar{a},s^\prime)$
+    \State $N(s,\bar{a},s^\prime) \leftarrow N(s,\bar{a},s^\prime)+1$
+  \EndIf
+  \State \Return $(s^\prime,r)$
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}

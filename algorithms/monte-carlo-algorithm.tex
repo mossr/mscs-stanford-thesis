@@ -1,0 +1,16 @@
+\algtext*{EndLoop}% Remove "end _X_" text
+\algtext*{EndIf}
+\algtext*{EndFor}
+\algtext*{EndFunction}
+\begin{algorithm}[th!]
+  \caption{Direct Monte Carlo simulation.}
+  \label{alg:mc}
+  \begin{algorithmic}
+  \Function{DirectMonteCarlo$(s_0,n,d)$}{}
+  \For {$1 \to n$}
+    \State \textproc{Initialize}$(\bar{\mathcal{S}})$
+    \State \textproc{Rollout}$(s_0, d)$ \algorithmiccomment{without action feeding}
+  \EndFor
+  \EndFunction
+  \end{algorithmic}
+\end{algorithm}

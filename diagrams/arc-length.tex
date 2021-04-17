@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+  [
+    scale=16, every node/.style={scale=2},
+    >=stealth,
+    point/.style = {draw, circle,  fill = black, inner sep = 1pt},
+    dot/.style   = {draw, circle,  fill = black, inner sep = .2pt},
+    latlon/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=4mm, fill=white, fill opacity=0.75, fill = black, inner sep = 0.1pt},
+    latlonstart/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=4mm, fill = black, inner sep = 0.3pt},
+    wpt/.style  = {diamond, fill=white, fill opacity=0.75},
+  ]
+
+  \tikzstyle{every node}=[font=\Large]
+
+
+  % the circle
+  \def\unit{0.5}
+  \def\rad{0.3}
+  \def\ang{45}
+  \def\failang{7}
+  \def\inner{0.3*\rad}
+  \def\failinner{0.6*\rad}
+  \def\failvalue{-28} % degrees
+
+  \node (origin) at (0,0) [point, label = {below:$c$}]{};
+
+  \node (initial) at +(-\unit,\rad) [latlon] {};
+  \node [rotate=-\failang] (failstart) at +(0, \rad) [latlonstart, red] {};
+  \draw[red] (failstart) arc (90:\ang+\failvalue:\rad);
+
+  \node (start) at +(0, \rad) [latlonstart, label = above:$s$] {};
+  \node [rotate=-\ang] (end) at +(\ang:\rad) [latlon, label ={[label distance=-1mm]above:$e$}] {};
+  \node (failend) at +(\ang+\failvalue:\rad) [rotate=-\ang, latlon,red] {};
+
+  \draw (start) arc (90:\ang:\rad);
+
+
+  \draw[-] (initial) -- node (ls) [label = {above:$\ell_1$}] {} (start);
+
+
+  \draw[dashed]
+    ($ (origin) ! 1 ! (start) $)
+    -- ($(start) ! 1 ! (origin)$ )
+    node (center) [right,label={[pos=0.45]left:$r$}] {};
+
+  \draw[dashed]
+    ($ (origin) ! 1 ! (end) $)
+    -- ($(end) ! 1 ! (origin)$ )
+    node [right] {};
+
+  \draw[->, rotate around={\ang:(end)}] (end) -- node (nextstraight) [very near end, label = {above:$\ell_2$},] {} (end |-, 0);
+  
+  % xshift=-4pt,yshift=0pt
+  \draw [,thick,decorate,decoration={brace,amplitude=30pt}] (start) -- (end) node [black,midway,above=33pt,pos=0.65] {$\alpha r$};
+  \draw [red,,thick,decorate,decoration={brace,amplitude=20pt}] (failend) -- (failstart) node [red,midway,below=27pt,pos=0.63] {$\beta$};
+
+  \draw [dashed] (0, \inner) arc (90:\ang:\inner);
+  \node (innerangle) at +(90-\ang+\ang/1.4:\inner) [label = {[label distance=-2mm]45:$\alpha$}] {};
+
+  \node (mid) at +(90-\ang/2:\rad) [draw, wpt, inner sep=1pt, rotate=90-\ang/2] {};
+
+\end{tikzpicture}
