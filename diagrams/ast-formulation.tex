@@ -33,7 +33,7 @@
 
     \begin{pgfonlayer}{simlayer}
         \path let \p1=(wptdist.north west), \p2=(sut.south east) in node (sim) [fit={($(\x1,\y1)+(-4cm,1.25cm)$) ($(\x2,\y2)+(1.3cm,-0.5cm)$)},simstyle,line width=0.08cm]{};
-        \node at ($(sim.north west)+(2cm,-7mm)$) [font={\LARGE}] {Simulator $\mathcal{\bar{S}}$};
+        \node at ($(sim.north west)+(2cm,-7mm)$) [font={\Large}] {Simulator $\bar{\mathcal{S}}$};
     \end{pgfonlayer}
 
     \draw[->,dashed,line width=0.5pt] (wptdist.south) |- ($(sim.west)+(0mm,-1cm)$) node[pos=0.5,xshift=-3cm,above]{transition probability $p$};

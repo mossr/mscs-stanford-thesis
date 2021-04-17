@@ -21,6 +21,9 @@
 \addbibresource{references/weakness_rec.bib}
 \addbibresource{references/pomdpstresstesting.bib}
 
+% DRAFTING: speed up compilation.
+% \def\includebody{} % sets to true
+\let\includebody\undefined % sets to false
 
 \begin{document}
 \title{Algorithms for efficient validation of black-box systems}
@@ -38,25 +41,29 @@ I would like to thank...
 \chapter{Introduction}
 \input{chapters/introduction}
 
-% Cross-Entropy Method Variants for Optimization
-\chapter{Cross-Entropy Surrogate Method} % TODO: change
-\input{chapters/cem_variants}
+\ifdefined\includebody
+    % Cross-Entropy Method Variants for Optimization
+    \chapter{Cross-Entropy Surrogate Method} % TODO: change
+    \input{chapters/cem_variants}
 
-\chapter{Episodic Adaptive Stress Testing}
-\input{chapters/episodic_ast}
+    \chapter{Episodic Adaptive Stress Testing}
+    \input{chapters/episodic_ast}
 
-\chapter{Adversarial Weakness Recognition}
-\input{chapters/weakness_rec}
+    \chapter{Adversarial Weakness Recognition}
+    \input{chapters/weakness_rec}
 
-% POMDPStressTesting.jl: Adaptive Stress Testing for Black-Box Systems
-\chapter{POMDPStressTesting.jl}
-\input{chapters/pomdpstresstesting}
+    % POMDPStressTesting.jl: Adaptive Stress Testing for Black-Box Systems
+    \chapter{POMDPStressTesting.jl}
+    \input{chapters/pomdpstresstesting}
+\fi
 
 \chapter{Conclusions}
 ...
 
 \appendix
-\input{appendices/episodic_ast_appendix}
+\ifdefined\includebody
+    \input{appendices/episodic_ast_appendix}
+\fi
 
 % \bibliographystyle{plain}
 % \bibliography{cem_variants}
