@@ -1,6 +1,6 @@
 This chapter discusses open source software tools built and used in the previous chapters.
 These tools were designed for general applications of this work and were written in the scientific computing language Julia.
-We first discusses the adaptive stress testing package used in \cref{cha:episodic_ast}, then provide quick usage examples of the packages used in \cref{cha:cem_variants} and \cref{cha:weakness_rec}. 
+We first discuss the adaptive stress testing package built for \cref{cha:episodic_ast}, then provide quick usage examples of the packages built for \cref{cha:cem_variants} and \cref{cha:weakness_rec}. 
 
 \section{POMDPStressTesting.jl Summary}
 
@@ -11,7 +11,7 @@ We provide different solver variants including online planning algorithms such a
 Stochastic optimization solvers such as the cross-entropy method \cite{cem} are also available and random search is provided as a baseline.
 Additional solvers can easily be added by adhering to the POMDPs.jl interface.
 
-\begin{lstlisting}[language=Julia]
+\begin{lstlisting}[language=JuliaLocal]
 # GrayBox simulator and environment
 abstract type GrayBox.Simulation end
 function GrayBox.environment(sim::Simulation)::GrayBox.Environment end
@@ -40,7 +40,7 @@ The tool most closely related to POMDPStressTesting.jl is the AST Toolbox in Pyt
 The author has contributed to the AST Toolbox and found the need to create a similar package in pure Julia for better performance and to interface with the POMDPs.jl ecosystem.
 
 
-\section{Statement of Need}
+\subsection{Statement of Need}
 
 Validating autonomous systems is a crucial requirement before their deployment into real-world environments.
 Searching for likely failures using automated tools enable engineers to address potential problems during development.
@@ -52,7 +52,7 @@ The interface is designed to easily extend to other autonomous system applicatio
 
 
 
-\section{Research and Industrial Usage}
+\subsection{Research and Industrial Usage}
 
 POMDPStressTesting.jl has been used to find likely failures in aircraft trajectory prediction systems \cite{ast_fms}, which are flight-critical subsystems used to aid in-flight automation.
 A developmental commercial flight management system was stress tested so the system engineers could mitigate potential issues before system deployment \cite{ast_fms}.
@@ -60,38 +60,53 @@ In addition to traditional requirements-based testing for avionics certification
 There is also ongoing research on the use of POMDPStressTesting.jl for assessing the risk of autonomous vehicles and determining failure scenarios of autonomous lunar rovers. 
 
 
-% \section{Acknowledgments}
+\subsection{Acknowledgments}
 
-% We acknowledge Ritchie Lee for his guidance and original work on adaptive stress testing and the AdaptiveStressTesting.jl package and Mark Koren, Xiaobai Ma, and Anthony Corso for their work on the AST Toolbox Python package and the CrossEntropyMethod.jl package.
-% We also acknowledge Shreyas Kowshik for his initial implementation of the TRPO and PPO algorithms in Julia.
-% We want to thank the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package; particular thanks to Zachary Sunberg.
+We acknowledge Ritchie Lee for his guidance and original work on adaptive stress testing and the AdaptiveStressTesting.jl package and Mark Koren, Xiaobai Ma, and Anthony Corso for their work on the AST Toolbox Python package and the CrossEntropyMethod.jl package.
+We also acknowledge Shreyas Kowshik for his initial implementation of the TRPO and PPO algorithms in Julia.
+We want to thank the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package; particular thanks to Zachary Sunberg.
 % We also want to thank Mykel J. Kochenderfer for his support and research input and for advancing the Julia community.
 
 
 \section{CrossEntropyVariants.jl Summary}
 
-This package summarizes the work done in \cref{cha:cem_variants}.
+This section summarizes the package produced from the work in \cref{cha:cem_variants}. To illustrate why we found Julia to be our language of choice, below we present a slightly cleaned-up version of our actual implementation of \cref{alg:ce_surrogate} (i.e., the \texttt{ce\_surrogate} algorithm), noting the direct translation of the pseudocode into executable Julia code:
+
+\begin{lstlisting}[language=JuliaLocal]
+function ce_surrogate(S, 𝐌, m, m_elite, k_max)
+    for k in 1:k_max
+        mₑ, m_elite = evaluation_schedule(k, k_max)
+        𝐗 = rand(𝐌, mₑ)
+        𝐘 = map(S, eachcol(𝐗))
+        𝐞 = 𝐗[:, sortperm(𝐘)[1:m_elite]]
+        𝐄 = model_elite_set!(𝐗, 𝐘, 𝐌, 𝐞, m, m_elite)
+        𝐌 = fit(𝐌, 𝐄)
+    end
+    return 𝐌
+end
+\end{lstlisting}
+
 To run an example optimization problem, consider the following code:
 
-\begin{lstlisting}[language=Julia]
+\begin{lstlisting}[language=JuliaLocal]
 using CrossEntropyVariants
 using Distributions
 
-f = sierra # objective function
+S = sierra # objective function
 𝛍 = [0, 0]
 𝚺 = [200 0; 0 200]
 𝐌 = MvNormal(𝛍, 𝚺) # proposal distribution
 
-(𝐌, bestₓ, bestᵥ) = ce_surrogate(f, 𝐌)
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌)
 \end{lstlisting}
 
 The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function \cite{kochenderfer2019algorithms}. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
 
-\begin{lstlisting}[language=Julia]
-f = paraboloid # objective function
+\begin{lstlisting}[language=JuliaLocal]
+S = paraboloid # objective function
 𝐌 = MvNormal([0, 0], [200 0; 0 200]) # proposal distribution
 
-(𝐌, bestₓ, bestᵥ) = ce_surrogate(f, 𝐌; basis=:squared)
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌; basis=:squared)
 \end{lstlisting}
 
 

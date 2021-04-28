@@ -1,0 +1,12 @@
+\usepackage{fontspec}
+
+\newfontfamily\JuliaMono{JuliaMono}[
+    UprightFont = *-Regular,
+    BoldFont = *-Bold,
+    Path = ./preamble/julia_mono_listings/,
+    Extension = .ttf]
+\newfontface\JuliaMonoRegular{JuliaMono-Regular}[Path=./preamble/julia_mono_listings/]
+\newfontface\JuliaMonoBold{JuliaMono-Bold}[Path=./preamble/julia_mono_listings/]
+
+% We don't want the global mono font to be JuliaMono.
+% \setmonofont{JuliaMono-Medium}[Contextuals=Alternate]

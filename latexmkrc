@@ -1,3 +1,4 @@
+ensure_path( 'TEXINPUTS', './preamble/julia_mono_listings//' );
 ensure_path( 'BIBINPUTS', './references//' );
 
 $pdf_mode = 4;
