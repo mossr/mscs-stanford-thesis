@@ -8,7 +8,7 @@ There are a few key assumptions that make the CE-method work effectively.
 Through random sampling, the CE-method assumes that there are enough objective function evaluations to accurately represent the objective. 
 This may not be a problem for simple applications, but can be an issue for computationally expensive objective functions. 
 Another assumption is that the initial parameters of the input distribution are wide enough to cover the design space of interest. For the case with a multivariate Gaussian distribution, this corresponds to an appropriate mean and wide covariance.
-In rare-event simulations with many local minima, the CE-method can fail to find a global minima especially with sparse objective function evaluations.
+In rare-event simulations with many local minima, the CE-method can fail to find the global minimum especially with sparse objective function evaluations.
 
 This work aims to address the key assumptions of the CE-method.
 We introduce variants of the CE-method that use surrogate modeling to approximate the objective function, thus updating the belief of the underlying objective through estimation.
@@ -24,7 +24,7 @@ Lastly, we provide an analysis of the weak areas of the CE-method compared to ou
 
 
 \section{Related Work} \label{sec:cem_related_work}
-The cross-entropy method is popular in the fields of operations research, machine learning, and optimization \cite{kochenderfer2015decision,Kochenderfer2019}.
+The cross-entropy method is popular in the fields of operations research, machine learning, and optimization \cite{kochenderfer2015decision,kochenderfer2019algorithms}.
 The combination of the cross-entropy method, surrogate modeling, and mixture models has been explored in other work \cite{bardenet2010surrogating}. 
 The work in \cite{bardenet2010surrogating} proposed an adaptive grid approach to accelerate Gaussian-process-based surrogate modeling using mixture models as the prior in the cross-entropy method. They showed that a mixture model performs better than a single Gaussian when the objective function is multimodal.
 Our work differs in that we augment the ``elite'' samples both by an approximate surrogate model and by a subroutine call to the CE-method using the learned surrogate model.
@@ -106,7 +106,7 @@ The parameter $\vec{\theta}_k$ at iteration $k$ is used to find new parameters $
 The threshold $\gamma_k$ becomes smaller that its initial value, thus artificially making events \textit{less rare} under $\vec{X} \sim g(\vec{x}; \vec{\theta}_k)$.
 
 In practice, the CE-method algorithm requires the user to specify a number of \textit{elite} samples $m_\text{elite}$ which are used when fitting the new parameters for iteration $k^\prime$.
-Conveniently, if our distribution $g$ belongs to the \textit{natural exponential family} then the optimal parameters can be found analytically \cite{Kochenderfer2019}. For a multivariate Gaussian distribution parameterized by $\vec{\mu}$ and $\mat{\Sigma}$, the optimal parameters for the next iteration $k^\prime$ correspond to the maximum likelihood estimate (MLE):
+Conveniently, if our distribution $g$ belongs to the \textit{natural exponential family} then the optimal parameters can be found analytically \cite{kochenderfer2019algorithms}. For a multivariate Gaussian distribution parameterized by $\vec{\mu}$ and $\mat{\Sigma}$, the optimal parameters for the next iteration $k^\prime$ correspond to the maximum likelihood estimate (MLE):
 \begin{align*}
     \vec{\mu}_{k^\prime} &= \frac{1}{m_\text{elite}} \sum_{i=1}^{m_\text{elite}} \vec{x}_i\\
     \vec{\Sigma}_{k^\prime} &= \frac{1}{m_\text{elite}} \sum_{i=1}^{m_\text{elite}} (\vec{x}_i - \vec{\mu}_{k^\prime})(\vec{x}_i - \vec{\mu}_{k^\prime})^\top
@@ -125,10 +125,10 @@ Note that a variety of input distributions for $g$ are supported, but we focus o
   \begin{algorithmic}
   \Function{CrossEntropyMethod}{}($S, g, m, m_\text{elite}, k_\text{max}$)
     \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $\mat{X} \sim g(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^m$
-        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$
-        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot\;; \vec{\theta}_k), \e)$
+        \State $\mat{X} \sim g(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|g|\times m}$\algorithmiccomment{draw $m$ samples from $g$}
+        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using objective $S$}
+        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from objective}
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot\;; \vec{\theta}_k), \e)$ \algorithmiccomment{re-fit distribution $g$ using elite samples}
     \EndFor
     \State \Return $g(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
   \EndFunction
@@ -178,7 +178,7 @@ In the context of optimization, a surrogate model $\hat{S}$ is used to estimate 
 Surrogate models are a popular approach and have been used to evaluate rare-event probabilities in computationally expensive systems \cite{li2010evaluation,li2011efficient}.
 The simplest example of a surrogate model is linear regression.
 In this work, we focus on the \textit{Gaussian process} surrogate model.
-A Gaussian process (GP) is a distribution over functions that predicts the underlying objective function $S$ and captures the uncertainty of the prediction using a probability distribution \cite{Kochenderfer2019}.
+A Gaussian process (GP) is a distribution over functions that predicts the underlying objective function $S$ and captures the uncertainty of the prediction using a probability distribution \cite{kochenderfer2019algorithms}.
 This means a GP can be sampled to generate random functions, which can then be fit to our given data $\mat{X}$.
 A Gaussian process is parameterized by a mean function $\m(\mat{X})$ and kernel function $\mat{K}(\mat{X},\mat{X})$, which captures the relationship between data points as covariance values.
 We denote a Gaussian process that produces estimates $\hat{\vec{y}}$ as:
@@ -203,7 +203,7 @@ For the kernel function $k(\vec{x}_i, \vec{x}_i)$, we use the squared exponentia
 \begin{align*}
 k(\vec{x},\vec{x}^\prime) = \sigma^2\exp\left(- \frac{(\vec{x} - \vec{x}^\prime)^\top(\vec{x} - \vec{x}^\prime)}{2\ell^2}\right)
 \end{align*}
-We refer to \cite{Kochenderfer2019} for a detailed overview of Gaussian processes and different kernel functions.
+We refer to \cite{kochenderfer2019algorithms} for a detailed overview of Gaussian processes and different kernel functions.
 
 
 
@@ -306,7 +306,7 @@ We refer to the variant of our CE-surrogate method that takes an input \textit{m
 The CE-mixture algorithm is identical to the CE-surrogate algorithm, but calls a custom \smallcaps{Fit} function to fit a mixture model to the elite set $\bfE$.
 The input distribution $\M$ is cast to a mixture model using the subcomponent distributions $\m$ as the components of the mixture.
 We use the default uniform weighting for each mixture component.
-The mixture model $\M$ is then fit using the expectation-maximization algorithm shown in \cref{alg:em}, and the resulting distribution is returned.
+The mixture model $\M$ is then fit using the expectation-maximization algorithm, and the resulting distribution is returned.
 The idea is to use the distributions in $\m$ that are centered around each true-elite as the components of the casted mixture model.
 Therefore, we would expect better performance of the CE-mixture method when the objective function has many competing local minima.
 Results in \cref{sec:cem_results} aim to show this behavior.
@@ -497,26 +497,45 @@ We chose this setup to analyze exploration schemes when given very little inform
 
 \subsection{Results and Analysis} \label{sec:cem_results}
 
-\begin{figure}[!hb]
-  % \centering
-  \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
-  \caption{
-    \label{fig:experiment_1a}
-    Average optimal value for experiment (1A) when the initial mean is centered at the global minimum and the covariance sufficiently covers the design space.
-  }
-\end{figure}
+% \begin{figure}[!hb]
+%   % \centering
+%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
+%   \caption{
+%     \label{fig:experiment_1a}
+%     Average optimal value for experiment (1A) when the initial mean is centered at the global minimum and the covariance sufficiently covers the design space.
+%   }
+% \end{figure}
 
 \Cref{fig:experiment_1a} shows the average value of the current optimal $\bar{b}_v$ for the three algorithms for experiment (1A). 
 One standard deviation is plotted in the shaded region.
 Notice that the standard CE-method converges to a local minima before $k_\text{max}$ is reached.
 Both CE-surrogate method and CE-mixture stay below the standard CE-method curve, highlighting the mitigation of convergence to local minima.
 Minor differences can be seen between CE-surrogate and CE-mixture, differing slightly towards the tail in favor of CE-surrogate.
-The average runtime of the algorithms along with the performance metrics are shown together for each experiment in \cref{tab:results}.
+The average runtime of the algorithms along with the performance metrics are shown together for each experiment in \cref{tab:cem_results}.
+
+\begin{figure*}[ht]
+    \centering
+    \subfloat[Average optimal value for experiment (1A) when the initial mean is centered at the global minimum and the covariance sufficiently covers the design space.]{%
+        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
+        \label{fig:experiment_1a}
+    }
+    \hspace{2mm}
+    \subfloat[Average optimal value for experiment (1B) when the initial mean is far from the global minimum with a wide covariance.]{%
+        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
+        \label{fig:experiment_1b}
+    }
+    \hspace{2mm}
+    \subfloat[Average optimal value for experiment (1C) when we restrict the number of objective function calls.]{%
+        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
+        \label{fig:experiment_1c}
+    }
+    \caption{Cross-entropy method variant experiment results.}\label{fig:cem_experiments}
+\end{figure*}
 
 
 \begin{table}[!ht]
     \centering
-    \caption{\label{tab:results} Experimental results.}
+    \caption{\label{tab:cem_results} Experimental results.}
     \begin{tabular}{cllll} % p{3cm}
     \toprule
     \textbf{Exper.} & \textbf{Algorithm} & \textbf{Runtime} & $\bar{b}_v$ & $\bar{b}_d$\\
@@ -543,20 +562,20 @@ The average runtime of the algorithms along with the performance metrics are sho
 \end{table}
 
 An apparent benefit of the standard CE-method is in its simplicity and speed.
-As shown in \cref{tab:results}, the CE-method is the fastest approach by about 2-3 orders of magnitude compared to CE-surrogate and CE-mixture.
+As shown in \cref{tab:cem_results}, the CE-method is the fastest approach by about 2-3 orders of magnitude compared to CE-surrogate and CE-mixture.
 The CE-mixture method is notably the slowest approach.
 Although the runtime is also based on the objective function being tested, recall that we are using the same number of true objective function calls in each algorithm, and the metrics we are concerned with in optimization are to minimize $\bar{b}_v$ and $\bar{b}_d$.
 We can see that the CE-surrogate method consistently out performs the other methods.
 Surprisingly, a uniform evaluation schedule performs the best even in the sparse scenario where the initial mean is far away from the global optimal.
 
-\begin{figure}[!ht]
-  % \centering
-  \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
-  \caption{
-    \label{fig:experiment_1b}
-    Average optimal value for experiment (1B) when the initial mean is far from the global minimum with a wide covariance.
-  }
-\end{figure}
+% \begin{figure}[!ht]
+%   % \centering
+%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
+%   \caption{
+%     \label{fig:experiment_1b}
+%     Average optimal value for experiment (1B) when the initial mean is far from the global minimum with a wide covariance.
+%   }
+% \end{figure}
 
 When the initial mean of the input distribution is placed far away from the global optimal, the CE-method tends to converge prematurely as shown in \cref{fig:experiment_1b}.
 This scenario is illustrated in \cref{fig:example_1b}.
@@ -564,7 +583,7 @@ We can see that both CE-surrogate and CE-mixture perform well in this case.
 
 \begin{figure}[!h]
   \centering
-  \resizebox{0.7\columnwidth}{!}{\input{figures/cem_variants/example1b.pgf}}
+  \resizebox{0.6\columnwidth}{!}{\input{figures/cem_variants/example1b.pgf}}
   \caption{
     \label{fig:example_1b}
     First iteration of the scenario in experiment (1B) where the initial distribution is far away form the global optimal. The red dots indicate the true-elites, the black dots with white outlines indicate the ``non-elites'' evaluated from the true objective function, and the white dots with black outlines indicate the samples evaluated using the surrogate model.
@@ -573,14 +592,14 @@ We can see that both CE-surrogate and CE-mixture perform well in this case.
 
 
 
-\begin{figure}[!ht]
-  % \centering
-  \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
-  \caption{
-    \label{fig:experiment_1c}
-    Average optimal value for experiment (1C) when we restrict the number of objective function calls.
-  }
-\end{figure}
+% \begin{figure}[!ht]
+%   % \centering
+%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
+%   \caption{
+%     \label{fig:experiment_1c}
+%     Average optimal value for experiment (1C) when we restrict the number of objective function calls.
+%   }
+% \end{figure}
 
 
 Given the same centered mean as before, when we restrict the number of objective function calls even further to just 50 we see interesting behavior.

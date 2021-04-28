@@ -63,7 +63,7 @@ Section \ref{sec:ast_background} provides necessary background of AST and commer
 This section describes background of the adaptive stress testing approach and flight management systems.
 
 \subsection{Adaptive Stress Testing} \label{sec:ast_background_ast}
-Adaptive stress testing (AST) is a black-box approach to find rare failure events in cyber-physical systems \cite{ast_acasx,lee2018adaptive}.
+Adaptive stress testing (AST) is a black-box approach to find rare failure events in cyber-physical systems \cite{ast_acasx,lee2020adaptive}.
 The AST problem is formulated as a Markov decision process (MDP) and can be solved using reinforcement learning algorithms to guide the search towards likely failure events.
 AST can also be formulated more generally as other sequential decision-making processes, such as a partially observable Markov decision process (POMDP) \cite{ast_acasx,ast_av,ast_traj_plan}.
 
@@ -231,18 +231,20 @@ The evaluation of our SUT is expensive so we limit the evaluations to the end of
 This way, we can reduce the number of external system executions but still provide the search with information during tree expansion, namely using back-propagated values of the transition probabilities and the miss distance from previously finished rollouts.
 Choosing to evaluate at the end of the rollout provides the SUT with an expanded set of waypoints which it evaluates once the rollout has reached its maximum depth.
 Generally for AST problem formulations, the discount factor $\gamma$ is set to $1$.
-Algorithm \ref{alg:mcts-pw} is the entry point of MCTS-PW.
+\Cref{alg:mcts-pw} is the entry point of MCTS-PW and \cref{alg:mcts-pw-simulate,alg:mcts-pw-rollout,alg:mcts-pw-action-widen,alg:mcts-pw-deterministic-state} detail the sub-routines.
 
 \input{algorithms/mcts-pw-algorithm.tex}
-\input{algorithms/mcts-pw-algorithm-part2.tex}
 
 
 \section{Implementation}
 \label{sec:ast_implementation}
-The AST implementation was written in the Julia programming language \cite{julia}.
-% Julia is an open-source, high-level, dynamically-typed, scientific computing language that can achieve speeds comparable to C \cite{julia}.
+The AST implementation was written in the Julia programming language \cite{bezanson2017julia}.
+% Julia is an open-source, high-level, dynamically-typed, scientific computing language that can achieve speeds comparable to C \cite{bezanson2017julia}.
 Implementation of the simulation environment around the SUT was also written in Julia, but this section will focus on the algorithms required for AST and MCTS-PW.
 Modifications to MCTS were implemented and merged into the existing MCTS.jl\footnote{\url{https://github.com/JuliaPOMDP/MCTS.jl}} Julia package.
+
+
+\input{algorithms/mcts-pw-algorithm-part2.tex}
 
 
 \subsection{Interface}\label{sec:ast_implementation_interface}
@@ -282,7 +284,7 @@ As an example, the functions in the above interface can either be implemented di
 % TODO. POMDPStressTesting.jl transferred to github.com/sisl
 
 \subsection{Stress Testing Julia Framework}
-We have implemented the AST interface written in Julia as part of a new package called POMDPStressTesting.jl.\footnote{\url{https://github.com/sisl/POMDPStressTesting.jl}}
+We have implemented the AST interface written in Julia as part of a new package called POMDPStressTesting.jl\footnote{\url{https://github.com/sisl/POMDPStressTesting.jl}} (see \cref{cha:tooling}).
 This package is inspired by work originally done in the AdaptiveStressTesting.jl\footnote{\url{https://github.com/sisl/AdaptiveStressTesting.jl}} package, but POMDPStressTesting.jl adheres to the \texttt{MDP} interface defined by the POMDPs.jl\footnote{\url{https://github.com/JuliaPOMDP/POMDPs.jl}} package  \cite{pomdps_jl}.
 Thus, POMDPStressTesting.jl fits into the POMDPs.jl ecosystem, which is why it can use the MCTS.jl package as an off-the-shelf solver.
 This design choice allows other Julia packages within the POMDPs.jl ecosystem to be used; this includes solvers, simulation tools, policies, and visualizations.
@@ -476,7 +478,7 @@ The bottom plot in \Cref{fig:distributions} shows the distribution of log-likeli
 
 
 
-The collected aggregate results are shown in \Cref{tab:results}.
+The collected aggregate results are shown in \Cref{tab:ast_results}.
 AST finds failures with relative likelihood about an order of magnitude greater than that of direct Monte Carlo.
 The CEM approach finds a small number of failures with very low relative likelihood.
 This is because CEM is using importance sampling and after re-weighting the samples using the true distribution, we would expect to get these extremely small likelihood values.
@@ -493,7 +495,7 @@ We see that AST finds failures in about $88\%$ of episodes (i.e. system executio
 
 \begin{table}[!ht]
   \centering
-  \caption{\label{tab:results} Experimental Results}
+  \caption{\label{tab:ast_results} Experimental Results}
   \begin{threeparttable}
   \begin{tabular}{@{}lrrrrr@{}}
     \toprule
@@ -526,25 +528,40 @@ A set of failure trajectories was generated and provided to the engineers of the
 These failures are encoded in input files than can be deterministically played back through the system.
 
 
-\begin{figure}[t!]
-\noindent\makebox[\columnwidth][c]{%
-\begin{minipage}{1.25\columnwidth}
-\centering
-\resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure.pgf}}
-\end{minipage}}
-\caption{Full trajectory of an example arc length failure originating from KSFO. Red diamonds indicate the input waypoints selected by MCTS and the yellow circles indicate the output lateral packets from the SUT. The red box shows where the failure occurs, shown in more detail in \Cref{fig:example_failure_zoomed}.}
-\label{fig:example_failure}
-\end{figure}
+\begin{figure*}[!t]
+  \centering
+    \subfloat[Full trajectory of an example arc length failure originating from KSFO. Red diamonds indicate the input waypoints selected by MCTS and the yellow circles indicate the output lateral packets from the SUT. The red box shows where the failure occurs, shown in more detail in \Cref{fig:example_failure_zoomed}.]{%
+    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/dasc-failure.pgf}}
+    \label{fig:example_failure}}
+    \hspace{2mm}
+    \subfloat[Example arc length failure, zoomed in from \Cref{fig:example_failure}. Notice two almost identical red waypoint diamonds, which are separated by about 0.08 \si{nmi} or about 486 \si{ft} (zoom in further for more detail). The arc length failure is shown as the extending arc after the center yellow waypoint, which extends about 3 \si{nmi} past its intended end waypoint. This extension is the negative miss distance.]{%
+    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/dasc-failure-zoomed.pgf}}
+    \label{fig:example_failure_zoomed}}
+  \caption{
+    \label{fig:example_failure_full} Example failure found by adaptive stress testing. 
+  } 
+\end{figure*}
 
-\begin{figure}[b!]
-\noindent\makebox[\columnwidth][c]{%
-\begin{minipage}{1.25\columnwidth}
-\centering
-\resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure-zoomed.pgf}}
-\end{minipage}}
-\caption{Example arc length failure, zoomed in from \Cref{fig:example_failure}. Notice two almost identical red waypoint diamonds, which are separated by about 0.08 \si{nmi} or about 486 \si{ft} (zoom in further for more detail). The arc length failure is shown as the extending arc after the center yellow waypoint, which extends about 3 \si{nmi} past its intended end waypoint. This extension is the negative miss distance.}
-\label{fig:example_failure_zoomed}
-\end{figure}
+
+% \begin{figure}[t!]
+% \noindent\makebox[\columnwidth][c]{%
+% \begin{minipage}{1.25\columnwidth}
+% \centering
+% \resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure.pgf}}
+% \end{minipage}}
+% \caption{Full trajectory of an example arc length failure originating from KSFO. Red diamonds indicate the input waypoints selected by MCTS and the yellow circles indicate the output lateral packets from the SUT. The red box shows where the failure occurs, shown in more detail in \Cref{fig:example_failure_zoomed}.}
+% \label{fig:example_failure}
+% \end{figure}
+
+% \begin{figure}[b!]
+% \noindent\makebox[\columnwidth][c]{%
+% \begin{minipage}{1.25\columnwidth}
+% \centering
+% \resizebox{0.55\columnwidth}{!}{\input{figures/episodic_ast/dasc-failure-zoomed.pgf}}
+% \end{minipage}}
+% \caption{Example arc length failure, zoomed in from \Cref{fig:example_failure}. Notice two almost identical red waypoint diamonds, which are separated by about 0.08 \si{nmi} or about 486 \si{ft} (zoom in further for more detail). The arc length failure is shown as the extending arc after the center yellow waypoint, which extends about 3 \si{nmi} past its intended end waypoint. This extension is the negative miss distance.}
+% \label{fig:example_failure_zoomed}
+% \end{figure}
 
 % \section{Future Work}
 % \label{sec:ast_future_work}

@@ -2,7 +2,7 @@
 
 \href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems through a technique called adaptive stress testing \cite{ast}.
 Adaptive stress testing (AST) has been used to find failures in safety-critical systems such as aircraft collision avoidance systems \cite{ast_acasx}, flight management systems \cite{ast_fms}, and autonomous vehicles \cite{ast_av}.
-The POMDPStressTesting.jl package is written in Julia \cite{julia} and is part of the wider POMDPs.jl ecosystem \cite{pomdps_jl}, which provides access to simulation tools, policies, visualizations, and---most importantly---solvers.
+The POMDPStressTesting.jl package is written in Julia \cite{bezanson2017julia} and is part of the wider POMDPs.jl ecosystem \cite{pomdps_jl}, which provides access to simulation tools, policies, visualizations, and---most importantly---solvers.
 We provide different solver variants including online planning algorithms such as Monte Carlo tree search \cite{mcts} and deep reinforcement learning algorithms such as trust region policy optimization (TRPO) \cite{trpo} and proximal policy optimization (PPO) \cite{ppo}.
 Stochastic optimization solvers such as the cross-entropy method \cite{cem} are also available and random search is provided as a baseline.
 Additional solvers can easily be added by adhering to the POMDPs.jl interface.
@@ -81,7 +81,7 @@ f = sierra # objective function
 (𝐌, bestₓ, bestᵥ) = ce_surrogate(f, 𝐌)
 \end{lstlisting}
 
-The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function \cite{Kochenderfer2019}. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
+The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function \cite{kochenderfer2019algorithms}. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
 
 \begin{lstlisting}[language=Julia]
 f = paraboloid # objective function
