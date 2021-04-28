@@ -232,12 +232,12 @@ Finally, the distribution $\M$ is fit to the elite set $\bfE$ and the distributi
   \begin{algorithmic}
   \Function{CE-Surrogate}{$S$, $\M$, $m$, $m_\text{elite}$, $k_\text{max}$}
     \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$
-        \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^m$
-        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$
-        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$
-        \State $\bfE \leftarrow \textproc{ModelEliteSet}(\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite})$
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot\;; \vec{\theta}_k), \bfE)$
+        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$ \algorithmiccomment{choose number of evaluations based on a schedule}
+        \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|\M| \times m}$ \algorithmiccomment{draw $m$ samples from $\M$}
+        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using true objective $S$}
+        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from true objective}
+        \State $\bfE \leftarrow \textproc{ModelEliteSet}(\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite})$ \algorithmiccomment{find model-elites using a surrogate model}
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot\;; \vec{\theta}_k), \bfE)$ \algorithmiccomment{re-fit distribution $\M$ using model-elite samples}
     \EndFor
     \State \Return $\M(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
   \EndFunction
@@ -264,12 +264,12 @@ The resulting concatenated elite set $\bfE$ is returned.
   \begin{algorithmic}
   \Function{ModelEliteSet}{$\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite}$}
     % Fit to entire population!
-    \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ % Squared exponential, NelderMead
-    \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{10m}$
-    \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$
-    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$
-    \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$
-    \State $\bfE \leftarrow \{ \e \} \cup \{ \e_\text{model} \} \cup \{ \e_\text{sub} \}$ \algorithmiccomment{elite set}
+    \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ \algorithmiccomment{fit a surrogate model to the samples} % Squared exponential, NelderMead
+    \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{|\M| \times {10m}}$ \algorithmiccomment{draw $10m$ samples from $\M$}
+    \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$ \algorithmiccomment{evaluate samples $\mat{X}_\text{m}$ using surrogate objective $\surrogate$}
+    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$ \algorithmiccomment{select model-elite samples output from surrogate objective}
+    \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$ \algorithmiccomment{generate sub-elite samples using surrogate $\surrogate$}
+    \State $\bfE \leftarrow \{ \e \} \cup \{ \e_\text{model} \} \cup \{ \e_\text{sub} \}$ \algorithmiccomment{combine all elite samples into an elite set}
     \State \Return $\bfE$
   \EndFunction
   \end{algorithmic}
@@ -289,10 +289,10 @@ In our case, we recommend using a small $k_\text{max}$ of around $2$ so the subc
   \begin{algorithmic}
   \Function{SubEliteSet}{$\surrogate, \M, \e$}
     \State $\e_\text{sub} \leftarrow \emptyset$
-    \State $\m \leftarrow \{ e_x \in \e ; \Normal(e_x, \M.\Sigma) \}$
+    \State $\m \leftarrow \{ e_x \in \e \mid \Normal(e_x, \M.\Sigma) \}$ \algorithmiccomment{create set of distributions centered at each model-elite sample}
     \For {$\m_i \in \m$}
-        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i ; \theta_{\text{CE}})$
-        \State $\e_\text{sub} \leftarrow \{\e_\text{sub}\} \cup \{\textproc{Best}(\m_i)\}$
+        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i ; \theta_{\text{CE}})$ \algorithmiccomment{run CE-method over each new distribution}
+        \State $\e_\text{sub} \leftarrow \{\e_\text{sub}\} \cup \{\textproc{Best}(\m_i)\}$ \algorithmiccomment{append best result into the sub-elite set}
     \EndFor
     \State \Return $\e_\text{sub}$
   \EndFunction
@@ -394,8 +394,7 @@ We can also control if the local minima clusters ``decay'', thus making those lo
 The parameters that define the sierra function are collected into $\vec{\theta} = \langle \mathbf{\tilde{\vec{\mu}}}, \mathbf{\tilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$.
 Using these parameters, we can define the mixture model used by the sierra function as:
 \begin{gather*}
-    \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\tilde{\vec{\mu}}},\; \mathbf{\tilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right)\\
-    \text{for } (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
+    \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\tilde{\vec{\mu}}},\; \mathbf{\tilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right) \quad\text{for}\quad (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
 \end{gather*}
 We add a final component to be our global minimum centered at $\mathbf{\tilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E[\Normal(\mathbf{\tilde{\vec{\mu}}}, \mathbf{\tilde{\mat{\Sigma}}}/(\sigma\eta))] = \mathbf{\tilde{\vec{\mu}}}$.
 We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights:
@@ -410,6 +409,19 @@ Experiments were run to stress a variety of behaviors of each CE-method variant.
 The experiments are split into two categories: algorithmic and scheduling.
 The algorithmic category aims to compare features of each CE-method variant while holding common parameters constant (for a better comparison).
 While the scheduling category experiments with evaluation scheduling heuristics.
+
+
+Because the algorithms are stochastic, we run each experiment with 50 different random number generator seed values.
+To evaluate the performance of the algorithms in their respective experiments, we define three metrics.
+First, we define the average ``optimal'' value $\bar{b}_v$ to be the average of the best so-far objective function value (termed ``optimal'' in the context of each algorithm). Again, we emphasize that we average over the 50 seed values to gather meaningful statistics.
+Another metric we monitor is the average distance to the true global optimal $\bar{b}_d = \norm{\vec{b}_{\vec{x}} - \vec{x}^*}$, where $\vec{b}_{\vec{x}}$ denotes the $\vec{x}$-value associated with the ``optimal''.
+We make the distinction between these metrics to show both ``closeness'' in \textit{value} to the global minimum and ``closeness'' in the \textit{design space} to the global minimum.
+Our final metric looks at the average runtime of each algorithm, noting that our goal is to off-load computationally expensive objective function calls to the surrogate model.
+
+For all of the experiments, we use a common setting of the following parameters for the sierra test function (shown in the top-right plot in \cref{fig:sierra}):
+\begin{equation*}
+    (\mathbf{\tilde{\vec{\mu}}} =[0,0],\; \sigma=3,\; \delta=2,\; \eta=6,\; \text{decay} = 1)
+\end{equation*}
 
 \begin{figure*}[!t]
   \centering
@@ -427,22 +439,11 @@ While the scheduling category experiments with evaluation scheduling heuristics.
   } 
 \end{figure*}
 
-Because the algorithms are stochastic, we run each experiment with 50 different random number generator seed values.
-To evaluate the performance of the algorithms in their respective experiments, we define three metrics.
-First, we define the average ``optimal'' value $\bar{b}_v$ to be the average of the best so-far objective function value (termed ``optimal'' in the context of each algorithm). Again, we emphasize that we average over the 50 seed values to gather meaningful statistics.
-Another metric we monitor is the average distance to the true global optimal $\bar{b}_d = \norm{\vec{b}_{\vec{x}} - \vec{x}^*}$, where $\vec{b}_{\vec{x}}$ denotes the $\vec{x}$-value associated with the ``optimal''.
-We make the distinction between these metrics to show both ``closeness'' in \textit{value} to the global minimum and ``closeness'' in the \textit{design space} to the global minimum.
-Our final metric looks at the average runtime of each algorithm, noting that our goal is to off-load computationally expensive objective function calls to the surrogate model.
-
-For all of the experiments, we use a common setting of the following parameters for the sierra test function (shown in the top-right plot in \cref{fig:sierra}):
-\begin{equation*}
-    (\mathbf{\tilde{\vec{\mu}}} =[0,0],\; \sigma=3,\; \delta=2,\; \eta=6,\; \text{decay} = 1)
-\end{equation*}
-
 
 \subsubsection{Algorithmic Experiments} \label{sec:cem_alg_experiments}
 We run three separate algorithmic experiments, each to test a specific feature.
 For our first algorithmic experiment (1A), we want to test each algorithm when the user-defined mean is centered at the global minimum and the covariance is arbitrarily wide enough to cover the design space.
+\Cref{fig:k5} illustrates experiment (1A) for each algorithm.
 Let $\M$ be a distribution parameterized by $\vec{\theta} = (\vec{\mu}, \mat{\Sigma})$, and for experiment (1A) we set the following:
 % CE-mixture mean and covariance (1A)
 \begin{equation*}
@@ -581,15 +582,7 @@ When the initial mean of the input distribution is placed far away from the glob
 This scenario is illustrated in \cref{fig:example_1b}.
 We can see that both CE-surrogate and CE-mixture perform well in this case.
 
-\begin{figure}[!h]
-  \centering
-  \resizebox{0.6\columnwidth}{!}{\input{figures/cem_variants/example1b.pgf}}
-  \caption{
-    \label{fig:example_1b}
-    First iteration of the scenario in experiment (1B) where the initial distribution is far away form the global optimal. The red dots indicate the true-elites, the black dots with white outlines indicate the ``non-elites'' evaluated from the true objective function, and the white dots with black outlines indicate the samples evaluated using the surrogate model.
-  }
-\end{figure}
-
+% % % 
 
 
 % \begin{figure}[!ht]
@@ -614,6 +607,17 @@ Using a Gaussian processes-based surrogate model, we can use the same number of 
 We also explored the use of a Gaussian mixture model to help find global minimum in multimodal objective functions.
 We introduce a parameterized test objective function with a controllable global minimum and spread of local minima.
 Using this test function, we showed that the CE-surrogate algorithm achieves the best performance relative to the standard CE-method, each using the same number of true objective function evaluations.
+
+
+\begin{figure}[!h]
+  \centering
+  \resizebox{0.6\columnwidth}{!}{\input{figures/cem_variants/example1b.pgf}}
+  \caption{
+    \label{fig:example_1b}
+    First iteration of the scenario in experiment (1B) where the initial distribution is far away form the global optimal. The red dots indicate the true-elites, the black dots with white outlines indicate the ``non-elites'' evaluated from the true objective function, and the white dots with black outlines indicate the samples evaluated using the surrogate model.
+  }
+\end{figure}
+
 
 
 % \printbibliography
