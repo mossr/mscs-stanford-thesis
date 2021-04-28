@@ -5,8 +5,7 @@
 With the expanding use of artificial intelligent algorithms to solve complex problems, there is an increasing need to ensure the validity of such systems. % safety?
 It may be challenging to exhaustively validate a complex system due to the continuous nature of systems deployed in the real-world.
 Therefore, to validate such systems, we need to rely on simulation.
-As with all simulations, we model the real-world through a series of approximations.
-Despite these approximations, it may still be computationally difficult to find system failures efficiently.
+As with all simulations, we model the real-world through a series of approximations, yet despite these approximations, it may still be computationally difficult to find system failures efficiently.
 The validation problem becomes even more challenging when failures are extremely rare and where a simple random search may severly underestimate the probability of failure (or even estimate it as zero).
 This work purposes several methods to try and efficiently search for likely failures in safety-critical systems, modeling the system as a black box.
 
@@ -14,11 +13,12 @@ This work purposes several methods to try and efficiently search for likely fail
 The term \textit{black box} refers to a software system for which we pass inputs and only have access to the provided outputs (i.e., the internals of the black-box system are unknown to us).
 Framing the problem around black-box systems allows these techiniques to be broadly applied to existing systems without the need to gain access to the internal code itself. 
 Techniques that require knowledge of the system internals are termed \textit{white box}, which are not the focus of this work. 
-% - Gray-box
+We may use the term \textit{gray box} when we need access to information that's part of the simulation environment in which the system is operating in (e.g., access to transition probabilies in the environment).
 % - Safety-critical systems?
 % - Cyber-physical systems?
 
 The validation problem can be split into \textit{falsification} (i.e., finding failures) and \textit{most-likely failure analysis} (i.e., finding likely failures). 
+We provide several approaches to falsification and build off the \textit{adaptive stress testing} \cite{lee2020adaptive} problem formulation for finding likely failures in black-box systems.
 % We propose a falsification approach to 
 % - CE-surrogate: what about it is used for rare-failure finding?
 % - How we use surrogate models to offload the computation to a learned function approximator.
@@ -27,19 +27,23 @@ We consider two types of systems we want to validate: sequential decision making
 Each system type has their own respective challenges to consider.
 We are also motivated by complex systems that are computationally expensive to evaluate, thus introducing techniques to intelligently select when we execute the system to reduce unnecessary evaluations. 
 
-% The core of this work is built on the \textit{adaptive stress testing} problem formulation for finding likely failures in black-box systems \cite{lee2020adaptive}.
 
 
 \section{Contributions} % (fold)
 \label{sec:contributions}
 
-The technical contributions of this thesis consist of the following:
+The contributions of this thesis are primarily algorithmic and open source tooling.
+Most of this work has been published in conferences \cite{moss2020adaptive}, open source journals \cite{moss2021pomdpstresstesting}, or is available online \cite{moss2020crossentropy}.
+The main contributions of this thesis consist of the following:
 
 \begin{itemize}
-    \item Cross-entropy surrogate method; algorithm for surrogate-based black-box stochastic optimization. Including a novel optimization test function (sierra).
-    \item Episodic adaptive stress testing formulation.
-    \item Framework for validation of large, static datasets using adversarial weakness recognition.
-    \item Open source tooling to apply general black-box adaptive stress testing (POMDPStressTesting.jl), the cross-entropy method algorithm variants (CrossEntropyVariants.jl), and the adversarial weakness recognition (FailureRepresentation.jl).
+    \item Two stochastic optimization algorithms called the \textit{cross-entropy surrogate method} and the \textit{cross-entropy mixture method} designed for finding rare failure events using fewer objective function evaluations. We also introduce a novel optimization test function called \textit{sierra} with user-defined control over the spread of local minima and a distinct global minimum.
+
+    \item A modification to the reinforcement learning-based \textit{adaptive stress testing} problem formulation that is more broadly applicable for episodic-based sequential decision making systems (i.e., systems that only receive a reward signal at the end of an episode). We apply this technique to stress test an aircraft trajectory predictor in a developmental commercial flight management system---intended to be complementary to requirements-based avionics testing.
+
+    \item An adaptive framework for validation of large, static datasets using adversarial weakness recognition.
+
+    \item Open source tooling to apply general black-box adaptive stress testing (\href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl})\footnote{\url{https://github.com/sisl/POMDPStressTesting.jl}}, the cross-entropy method algorithm variants (\href{https://github.com/mossr/CrossEntropyVariants.jl}{CrossEntropyVariants.jl})\footnote{\url{https://github.com/mossr/CrossEntropyVariants.jl}}, and adversarial weakness recognition (\href{https://github.com/sisl/FailureRepresentation.jl}{FailureRepresentation.jl})\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}}.
 \end{itemize}
 
 % section contributions (end)
