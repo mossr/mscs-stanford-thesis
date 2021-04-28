@@ -1,5 +1,5 @@
-\section{Introduction}
-\label{sec:introduction}
+% \section{Introduction}
+% \label{sec:ast_introduction}
 
 A primary function of aircraft flight management systems (FMS) is to provide guidance in the form of navigational waypoints between origin and destination airports.
 A trajectory predictor is the subsystem that provides trajectories to the guidance subsystem that commands the autopilot.
@@ -24,7 +24,7 @@ Therefore, this work extends the AST approach to be applied more generally to se
 We analyze a trajectory predictor from a developmental commercial FMS which takes as input winds aloft, origin and destination airports, and a collection the lateral waypoints.
 The trajectory predictor outputs the discrete-time controls that determine translational motion which would be input to the FMS.
 Within the FMS, the trajectories are passed to the guidance subsystem which determines how to command the autopilot.
-Although we focus on arc length discrepancies as the primary failure mode (described in \Cref{sec:application}), this work can be easily extended to other failure events.
+Although we focus on arc length discrepancies as the primary failure mode (described in \Cref{sec:ast_application}), this work can be easily extended to other failure events.
 The performance of AST is compared to two baselines: direct Monte Carlo simulation and the cross-entropy method.
 Current failure assessment is performed exhaustively over a navigational database of predefined aircraft routes defined by lateral waypoints.
 This testing method is used during development while requirement-based testing is used for final system certification following RTCA DO-178C \cite{do178c}.
@@ -33,9 +33,9 @@ As a comparison of developmental testing approaches, we sample routes from the n
 Experiments were run to generate likely failure events that are provided to the developers of the trajectory predictor to analyze and resolve potential shortcomings of the system.
 
 
-% \section{Prior Work} \label{sec:prior_work}
+% \section{Prior Work} \label{sec:ast_prior_work}
 AST has been successfully applied to safety-critical systems such as aircraft collision avoidance systems  \cite{ast_acasx,lee2018differential} and autonomous vehicles \cite{ast_av}. 
-\citeauthor*{ast_traj_plan} applied AST to trajectory planning systems, but as will be discussed further in \Cref{sec:approach_ast}, that problem had access to the full FMS, thus fitting the model of traditional AST.
+\citeauthor*{ast_traj_plan} applied AST to trajectory planning systems, but as will be discussed further in \Cref{sec:ast_approach_ast}, that problem had access to the full FMS, thus fitting the model of traditional AST.
 They looked at runtime behavior of the FMS on a simulated aircraft, where the disturbances were added as sensor noise.
 In our work, we do not rely on simulating aircraft dynamics and use input waypoints as the disturbances.
 
@@ -53,16 +53,16 @@ Our work addresses falsification of sequential systems with episodic reward and 
 
 
 This paper is organized as follows. 
-% Section \ref{sec:prior_work} reviews prior work of safety-critical applications of AST and reviews alternative approaches to falsification of cyber-physical systems.
-Section \ref{sec:background} provides necessary background of AST and commercial aircraft FMS. Section \ref{sec:approach} describes how this work extends existing AST approaches and modifications made to the MCTS algorithm. Section \ref{sec:implementation} details the implementation of this work using the Julia programming language and provides a description of the interface for AST to interact with black-box systems. Section \ref{sec:application} describes the simulation environment constructed for the FMS application and the failure events we are searching for. Section \ref{sec:experiments} describes the experiments and discusses the analysis of the results. Lastly, \Cref{sec:conclusion} provides a discussion on the conclusions from this work.
+% Section \ref{sec:ast_prior_work} reviews prior work of safety-critical applications of AST and reviews alternative approaches to falsification of cyber-physical systems.
+Section \ref{sec:ast_background} provides necessary background of AST and commercial aircraft FMS. Section \ref{sec:ast_approach} describes how this work extends existing AST approaches and modifications made to the MCTS algorithm. Section \ref{sec:ast_implementation} details the implementation of this work using the Julia programming language and provides a description of the interface for AST to interact with black-box systems. Section \ref{sec:ast_application} describes the simulation environment constructed for the FMS application and the failure events we are searching for. Section \ref{sec:ast_experiments} describes the experiments and discusses the analysis of the results. Lastly, \Cref{sec:ast_discussion} provides a discussion on the conclusions from this work.
 
 
 
 
-\section{Background} \label{sec:background}
+\section{Background} \label{sec:ast_background}
 This section describes background of the adaptive stress testing approach and flight management systems.
 
-\subsection{Adaptive Stress Testing} \label{sec:background_ast}
+\subsection{Adaptive Stress Testing} \label{sec:ast_background_ast}
 Adaptive stress testing (AST) is a black-box approach to find rare failure events in cyber-physical systems \cite{ast_acasx,lee2018adaptive}.
 The AST problem is formulated as a Markov decision process (MDP) and can be solved using reinforcement learning algorithms to guide the search towards likely failure events.
 AST can also be formulated more generally as other sequential decision-making processes, such as a partially observable Markov decision process (POMDP) \cite{ast_acasx,ast_av,ast_traj_plan}.
@@ -137,14 +137,14 @@ The outputs of the trajectory predictor are illustrated in \Cref{fig:lateral_pac
 
 
 \section{Approach}
-\label{sec:approach}
+\label{sec:ast_approach}
 
 Several modifications were made to adapt AST for sequential decision-making systems with episodic reward.
 Modifications to the standard reward function were made to guide the search towards severe failures as well as likely failures.
 Modifications to the Monte Carlo tree search algorithm are also described; adapting the search algorithm for efficient SUT evaluations and to use progressive widening with a single deterministic next state.% (given the nature of controlling seeds).
 
 
-\subsection{Adaptive Stress Testing for Episodic Reward Problems} \label{sec:approach_ast}
+\subsection{Adaptive Stress Testing for Episodic Reward Problems} \label{sec:ast_approach_ast}
 
 % Modified AST formulation (MDP)
 \begin{figure*}[!b]
@@ -182,11 +182,11 @@ The transition probability $p$ is given by the probability of sampling a set of 
 If an event is found, then the reward is the negative miss distance combined with the log-likelihood and adjusted by the multiplicative bonus $R_E$.
 This modification is used to incorporate severity of an event gauged by the miss distance when an event is found.
 If the simulation terminates without finding an event, no multiplicative bonus is applied.  
-This reward function may not be suitable for certain AST problem formulations, but in \Cref{sec:application} we discuss how these modifications are applicable for the failure event and miss distance we investigate.
+This reward function may not be suitable for certain AST problem formulations, but in \Cref{sec:ast_application} we discuss how these modifications are applicable for the failure event and miss distance we investigate.
 
 
 % MCTS algorithm pseudocode
-\subsection{Modified Monte Carlo Tree Search} \label{sec:mcts}
+\subsection{Modified Monte Carlo Tree Search} \label{sec:ast_mcts}
 Monte Carlo tree search (MCTS) is an anytime algorithm that uses rollouts of a random policy to estimate the value of each state-action node in the tree \cite{coulom2006efficient,dmubook}.
 MCTS has found success in recent years in the reinforcement learning field, notably playing games such as Go \cite{silver2016mastering}.
 There are four main stages in each simulation: \textit{selection}, \textit{expansion}, \textit{rollout} (or \textit{simulation}), and \textit{backpropagation}.
@@ -238,14 +238,14 @@ Algorithm \ref{alg:mcts-pw} is the entry point of MCTS-PW.
 
 
 \section{Implementation}
-\label{sec:implementation}
+\label{sec:ast_implementation}
 The AST implementation was written in the Julia programming language \cite{julia}.
 % Julia is an open-source, high-level, dynamically-typed, scientific computing language that can achieve speeds comparable to C \cite{julia}.
 Implementation of the simulation environment around the SUT was also written in Julia, but this section will focus on the algorithms required for AST and MCTS-PW.
 Modifications to MCTS were implemented and merged into the existing MCTS.jl\footnote{\url{https://github.com/JuliaPOMDP/MCTS.jl}} Julia package.
 
 
-\subsection{Interface}\label{sec:implementation_interface}
+\subsection{Interface}\label{sec:ast_implementation_interface}
 To apply AST to a general black-box system, a user has to provide the interface defined in \Cref{tab:interface}.
 % 
 The simulation object $\bar{\mathcal{S}}$ is the user-defined data structure that holds parameters for their simulation.
@@ -293,7 +293,7 @@ The intention of the POMDPStressTesting.jl package is to provide the user with a
 
 
 \section{Application}
-\label{sec:application}
+\label{sec:ast_application}
 
 The primary goal of this work is applying the modified AST formulation to a trajectory predictor in a developmental commercial FMS.
 The following sections will describe the input and output specification of the trajectory predictor and detail the investigated failure event and the associated miss distance.
@@ -361,8 +361,8 @@ Mean and variance values for the waypoint direction and distance were set by a d
 \end{bmatrix}
 \end{gather*}
 
-The simulator implements the interface defined in \Cref{sec:implementation_interface} for the trajectory predictor.
-The failure event and miss distance calculations described in \Cref{sec:application} were also implemented within the simulator.
+The simulator implements the interface defined in \Cref{sec:ast_implementation_interface} for the trajectory predictor.
+The failure event and miss distance calculations described in \Cref{sec:ast_application} were also implemented within the simulator.
 
 \subsection{Navigational Database}
 In addition to the simulator, we have access to a navigational database of aircraft routing procedures.
@@ -373,10 +373,10 @@ We employ the navigational database as a baseline by sampling the same allotted 
 
 
 \section{Experiments}
-\label{sec:experiments}
+\label{sec:ast_experiments}
 Experiments were run to test the AST approach using MCTS-PW against direct Monte Carlo (MC) simulations as a na\"ive baseline and the cross-entropy method as an importance sampling baseline.
 We also perform Monte Carlo sampling over the routes in the navigational database as another baseline.
-Algorithm \ref{alg:mc} describes the direct Monte Carlo simulation approach for $n$ episodes, starting at an initial state $s_0$, with a rollout depth $d$. Note the rollout function does not use the action feeding procedure described in \Cref{sec:mcts}.
+Algorithm \ref{alg:mc} describes the direct Monte Carlo simulation approach for $n$ episodes, starting at an initial state $s_0$, with a rollout depth $d$. Note the rollout function does not use the action feeding procedure described in \Cref{sec:ast_mcts}.
 
 \input{algorithms/monte-carlo-algorithm.tex}
 
@@ -547,7 +547,7 @@ These failures are encoded in input files than can be deterministically played b
 \end{figure}
 
 % \section{Future Work}
-% \label{sec:future_work}
+% \label{sec:ast_future_work}
 % Incorporating a search over origin/destination airports, winds aloft, aircraft weight, and cost index will be explored.
 % Updates to the developmental trajectory predictor will need to be made for these inputs to be registered.
 % An extension of this work would include failure events for predicted altitude constraints.
@@ -566,8 +566,8 @@ Further extensions of this work include searching for other failure events and s
 \pagebreak
 
 
-\section{Conclusion}
-\label{sec:conclusion}
+\section{Discussion}
+\label{sec:ast_discussion}
 Adaptive stress testing was extended for sequential systems with episodic reward to find likely failures in FMS trajectory predictors.
 To improve search performance, we used Monte Carlo tree search with progressive widening and modified the rollout with end-of-depth evaluations.
 We feed the best action midway through the rollout to encourage exploration of promising actions, resulting in exploiting failures to maximize their likelihood. 

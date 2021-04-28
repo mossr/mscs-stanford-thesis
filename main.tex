@@ -22,8 +22,8 @@
 \addbibresource{references/pomdpstresstesting.bib}
 
 % DRAFTING: speed up compilation.
-% \def\includebody{} % sets to true
-\let\includebody\undefined % sets to false
+\def\includebody{} % sets to true
+% \let\includebody\undefined % sets to false
 
 \begin{document}
 \title{Algorithms for efficient validation of black-box systems}
@@ -46,17 +46,17 @@
 
 \ifdefined\includebody
     % Cross-Entropy Method Variants for Optimization
-    \chapter{Cross-Entropy Surrogate Method} % TODO: change
+    \chapter{Cross-Entropy Surrogate Method}\label{cha:cem_variants}
     \input{chapters/cem_variants}
 
-    \chapter{Episodic Adaptive Stress Testing}
+    \chapter{Episodic Adaptive Stress Testing}\label{cha:episodic_ast}
     \input{chapters/episodic_ast}
 
-    \chapter{Adversarial Weakness Recognition}
+    \chapter{Adversarial Weakness Recognition}\label{cha:weakness_rec}
     \input{chapters/weakness_rec}
 
     % POMDPStressTesting.jl: Adaptive Stress Testing for Black-Box Systems
-    \chapter{POMDPStressTesting.jl}
+    \chapter{Open Source Tooling}\label{cha:tooling}
     \input{chapters/pomdpstresstesting}
 \fi
 

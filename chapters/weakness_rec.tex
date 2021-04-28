@@ -1,4 +1,4 @@
-\section{Introduction}
+% \section{Introduction}
 Finding failures in a validation dataset may be computationally expensive if we search over the entire dataset.
 Then the challenge becomes how to intelligently select candidate inputs that are likely to lead to failures.
 We are also interested in finding failures in black-box systems, i.e. systems where we can only pass inputs and observe outputs---without any knowledge of the inner-workings of the system.
@@ -219,25 +219,54 @@ This allows us to compare our adversarial learning approach to a baseline. \Cref
 % \end{figure}
 
 \section{Analysis and Discussion}
-\begin{wrapfigure}{r}{0.3\textwidth}
-  \vspace{-30pt}
-  \centering
-  \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
-  \caption{Confusion matrix.}
-  \label{fig:confusion_adversary}
-\end{wrapfigure}
+% \begin{wrapfigure}{r}{0.3\textwidth}
+%   \vspace{-30pt}
+%   \centering
+%   \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
+%   \caption{Confusion matrix.}
+%   \label{fig:confusion_adversary}
+% \end{wrapfigure}
+% \begin{figure}[ht]
+%   \centering
+%   \resizebox{0.5\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
+%   \caption{Confusion matrix.}
+%   \label{fig:confusion_adversary}
+% \end{figure}
+\begin{figure*}[ht]
+    \centering
+    \subfloat[Confusion matrix.]{%
+        \resizebox{0.49\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
+        \label{fig:confusion_adversary}
+    }
+    % \hspace{5mm}
+    \subfloat[Failure likelihood prediction per pixel.]{%
+        \resizebox{0.49\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
+        \label{fig:failure_likelihood}
+    }
+    \caption{Failure classifier performance and predictions.}
+    \label{fig:prediction_results}
+\end{figure*}
 Shown by the confusion matrix in \Cref{fig:confusion_adversary}, the adversarial failure classifier achieves about $0.24$ in precision and $0.23$ in recall.
 Compared to random, the precision rate is about $3$ times better using the adversary. Random recall---as expected---is around $0.5$.
 These results show that our approach learned the low-dimensional representation of a failure over the validation set, and based on this information it selected candidate failures to be evaluated.
 To see which element of the low-dimensional feature vector contributed the most to a likely failure as predicted by the adversary, we encoded a one-hot vector over $\mathbb{R}^{28\times28}$ (i.e. the input space) and plotted the output likelihood of failure for each of the pixels, shown in \Cref{fig:failure_likelihood}.
 
+% \begin{figure}[ht]
+% \centering
+% \resizebox{0.5\textwidth}{!}{%
+%     \input{figures/weakness_rec/failure-likelihood.pgf}
+% }
+% \caption{Failure likelihood prediction per pixel.}
+% \label{fig:failure_likelihood}
+% \end{figure}
+
 % THIS TAKES A WHILE TO COMPILE....
-\begin{wrapfigure}{l}{0.3\textwidth}
-  \centering
-  \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
-  \caption{Failure likelihood.}
-  \label{fig:failure_likelihood}
-\end{wrapfigure}
+% \begin{wrapfigure}{l}{0.3\textwidth}
+%   \centering
+%   \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
+%   \caption{Failure likelihood.}
+%   \label{fig:failure_likelihood}
+% \end{wrapfigure}
 
 \Cref{fig:predictions} compares the failures classified by the adversary.
 For the true positives in \Cref{fig:true_positives}, the top row of digits are the $10$ digits with the highest predicted failure likelihood that were true failures, the middle row shows the feature that had the strongest influence on the failure classification (decoding a one-hot vector representation of the maximum of a $\softmax$ over low-dimensional inputs), and the bottom row shows the reconstructed digits after passing through the autoencoder.
@@ -265,7 +294,7 @@ Similarly for the false negatives in \Cref{fig:false_negatives}, the top row are
 % \end{figure}
 
 
-\begin{figure*}[t]
+\begin{figure*}[ht]
     \centering
     \subfloat[Adversarial true positives.]{%
         \resizebox{0.45\textwidth}{!}{
@@ -305,12 +334,12 @@ Similarly for the false negatives in \Cref{fig:false_negatives}, the top row are
 % \end{wrapfigure}
 
 
-\section{Conclusion and Future Work}
+\section{Future Work}
 To avoid exhaustively searching an entire validation set for failures, we show that an iterative framework that uses an adversarial failure classifier trained on low-dimensional representations of the inputs can select failures about $3$ times more likely than randomly choosing candidates to evaluate.
 To extend this framework, we could investigate different adversarial architectures, particularly around deep reinforcement learning.
 We could also explore how to take the true failures found, automatically improve the system under test, and then in a continual learning approach we could rerun this validation loop to use prior knowledge of previous system failures to find new system failures.
 
-\section{Contributions}
-Robert Moss consulted regularly with Bernard Lange, who is taking CS330 Meta Learning, regarding the project ideas.
-Originally, Bernard and Robert were going to collaborate on this project but took different directions as the quarter progressed.
-All of the work seen here (literature review, framework design, coding, training, analysis, plotting, and writing) was completed solely by Robert Moss.
+% \section{Contributions}
+% Robert Moss consulted regularly with Bernard Lange, who is taking CS330 Meta Learning, regarding the project ideas.
+% Originally, Bernard and Robert were going to collaborate on this project but took different directions as the quarter progressed.
+% All of the work seen here (literature review, framework design, coding, training, analysis, plotting, and writing) was completed solely by Robert Moss.

@@ -1,4 +1,4 @@
-\section{Summary}
+\section{POMDPStressTesting.jl Summary}
 
 \href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems through a technique called adaptive stress testing \cite{ast}.
 Adaptive stress testing (AST) has been used to find failures in safety-critical systems such as aircraft collision avoidance systems \cite{ast_acasx}, flight management systems \cite{ast_fms}, and autonomous vehicles \cite{ast_av}.
@@ -56,9 +56,43 @@ In addition to traditional requirements-based testing for avionics certification
 There is also ongoing research on the use of POMDPStressTesting.jl for assessing the risk of autonomous vehicles and determining failure scenarios of autonomous lunar rovers. 
 
 
-\section{Acknowledgments}
+% \section{Acknowledgments}
 
-We acknowledge Ritchie Lee for his guidance and original work on adaptive stress testing and the AdaptiveStressTesting.jl package and Mark Koren, Xiaobai Ma, and Anthony Corso for their work on the AST Toolbox Python package and the CrossEntropyMethod.jl package.
-We also acknowledge Shreyas Kowshik for his initial implementation of the TRPO and PPO algorithms in Julia.
-We want to thank the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package; particular thanks to Zachary Sunberg.
-We also want to thank Mykel J. Kochenderfer for his support and research input and for advancing the Julia community.
+% We acknowledge Ritchie Lee for his guidance and original work on adaptive stress testing and the AdaptiveStressTesting.jl package and Mark Koren, Xiaobai Ma, and Anthony Corso for their work on the AST Toolbox Python package and the CrossEntropyMethod.jl package.
+% We also acknowledge Shreyas Kowshik for his initial implementation of the TRPO and PPO algorithms in Julia.
+% We want to thank the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package; particular thanks to Zachary Sunberg.
+% We also want to thank Mykel J. Kochenderfer for his support and research input and for advancing the Julia community.
+
+
+\section{CrossEntropyVariants.jl Summary}
+
+This package summarizes the work done in \cref{cha:cem_variants}.
+To run an example optimization problem, consider the following code:
+
+\begin{lstlisting}[language=Julia]
+using CrossEntropyVariants
+using Distributions
+
+f = sierra # objective function
+𝛍 = [0, 0]
+𝚺 = [200 0; 0 200]
+𝐌 = MvNormal(𝛍, 𝚺) # proposal distribution
+
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(f, 𝐌)
+\end{lstlisting}
+
+The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function \cite{Kochenderfer2019}. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
+
+\begin{lstlisting}[language=Julia]
+f = paraboloid # objective function
+𝐌 = MvNormal([0, 0], [200 0; 0 200]) # proposal distribution
+
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(f, 𝐌; basis=:squared)
+\end{lstlisting}
+
+
+\section{FailureRepresentation.jl Summary}
+
+\begin{lstlisting}[language=Julia]
+X, Y, mapping, adversary, metrics, metrics_rand = sampled_validation_iteration(T=10)
+\end{lstlisting}

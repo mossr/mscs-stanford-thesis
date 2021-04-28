@@ -1,4 +1,4 @@
-\section{Introduction}
+% \section{Introduction}
 The cross-entropy (CE) method is a probabilistic optimization approach that attempts to iteratively fit a distribution to elite samples from an initial input distribution \cite{rubinstein2004cross,rubinstein1999cross}.
 The goal is to estimate a rare-event probability by minimizing the \textit{cross-entropy} between the two distributions \cite{de2005tutorial}.
 The CE-method has gained popularity in part due to its simplicity in implementation and straightforward derivation.
@@ -23,21 +23,21 @@ Parameters for the sierra function allow control over both the spread and distin
 Lastly, we provide an analysis of the weak areas of the CE-method compared to our proposed variants.
 
 
-\section{Related Work} \label{sec:related_work}
+\section{Related Work} \label{sec:cem_related_work}
 The cross-entropy method is popular in the fields of operations research, machine learning, and optimization \cite{kochenderfer2015decision,Kochenderfer2019}.
 The combination of the cross-entropy method, surrogate modeling, and mixture models has been explored in other work \cite{bardenet2010surrogating}. 
 The work in \cite{bardenet2010surrogating} proposed an adaptive grid approach to accelerate Gaussian-process-based surrogate modeling using mixture models as the prior in the cross-entropy method. They showed that a mixture model performs better than a single Gaussian when the objective function is multimodal.
 Our work differs in that we augment the ``elite'' samples both by an approximate surrogate model and by a subroutine call to the CE-method using the learned surrogate model.
 Other related work use Gaussian processes and a modified cross-entropy method for receding-horizon trajectory optimization \cite{tan2018gaussian}.
 Their cross-entropy method variant also incorporates the notion of exploration in the context of path finding applications.
-An approach based on \textit{relative entropy}, described in \cref{sec:background_ce}, proposed a model-based stochastic search that seeks to minimize the relative entropy \cite{NIPS2015_5672}. They also explore the use of a simple quadratic surrogate model to approximate the objective function.
+An approach based on \textit{relative entropy}, described in \cref{sec:cem_background_ce}, proposed a model-based stochastic search that seeks to minimize the relative entropy \cite{NIPS2015_5672}. They also explore the use of a simple quadratic surrogate model to approximate the objective function.
 Prior work that relate cross-entropy-based adaptive importance sampling with Gaussian mixture models show that a mixture model require less objective function calls than a na\"ive Monte Carlo or standard unimodal cross-entropy-based importance sampling method \cite{kurtz2013cross,wang2016cross}.
 
 
-\section{Background} \label{sec:background}
+\section{Background} \label{sec:cem_background}
 This section provides necessary background on techniques used in this work. We provide introductions to cross-entropy and the cross-entropy method, surrogate modeling using Gaussian processes, and multivariate Gaussian mixture models.
 
-\subsection{Cross-Entropy} \label{sec:background_ce}
+\subsection{Cross-Entropy} \label{sec:cem_background_ce}
 Before understanding the cross-entropy method, we first must understand the notion of \textit{cross-entropy}.
 Cross-entropy is a metric used to measure the distance between two probability distributions, where the distance may not be symmetric \cite{de2005tutorial}.
 The distance used to define cross-entropy is called the \textit{Kullback-Leibler (KL) distance} or \textit{KL divergence}.
@@ -52,20 +52,20 @@ Minimizing the KL distance $\mathcal{D}$ between our true distribution $f$ and o
 \begin{align*}
     H(f,g) &= H(f) + \mathcal{D}(f,g)\\
            &= -\E_f[\log g(\vec{X})] \tag{using KL distance}\\
-           &= - \int\limits_{\vec{x} \in \mathcal{X}} f(\vec{x}) \log g(\vec{x} \mid \vec{\theta}) d\vec{x}
+           &= - \int\limits_{\vec{x} \in \mathcal{X}} f(\vec{x}) \log g(\vec{x}; \vec{\theta}) d\vec{x}
 \end{align*}
 where $H(f)$ denotes the entropy of the distribution $f$ (where we conflate entropy and continuous entropy for convenience).
 This assumes that $f$ and $g$ share the support $\mathcal{X}$ and are continuous with respect to $\vec{x}$.
 The minimization problem then becomes:
 \begin{equation} \label{eq:min}
 \begin{aligned}
-    \minimize_{\vec{\theta}} & & - \int\limits_{\vec{x} \in \mathcal{X}} f(\vec{x}) \log g(\vec{x} \mid \vec{\theta}) d\vec{x}
+    \minimize_{\vec{\theta}} & & - \int\limits_{\vec{x} \in \mathcal{X}} f(\vec{x}) \log g(\vec{x}; \vec{\theta}) d\vec{x}
 \end{aligned}
 \end{equation}
 Efficiently finding this minimum is the goal of the cross-entropy method algorithm.
 
 
-\subsection{Cross-Entropy Method} \label{sec:background_cem}
+\subsection{Cross-Entropy Method} \label{sec:cem_background_cem}
 Using the definition of cross-entropy, intuitively the \textit{cross-entropy method} (CEM or CE-method) aims to minimize the cross-entropy between the unknown true distribution $f$ and a proposal distribution $g$ parameterized by $\vec\theta$.
 This technique reformulates the minimization problem as a probability estimation problem, and uses adaptive importance sampling to estimate the unknown expectation \cite{de2005tutorial}.
 The cross-entropy method has been applied in the context of both discrete and continuous optimization problems \cite{rubinstein1999cross,kroese2006cross}.
@@ -75,7 +75,7 @@ The initial goal is to estimate the probability
 \begin{align*}
     \ell = P_{\vec{\theta}}(S(\vec{x}) \ge \gamma)
 \end{align*}
-where $S$ can the thought of as an objective function of $\vec{x}$, and $\vec{x}$ follows a distribution defined by $g(\vec{x} \mid \vec{\theta})$.
+where $S$ can the thought of as an objective function of $\vec{x}$, and $\vec{x}$ follows a distribution defined by $g(\vec{x}; \vec{\theta})$.
 We want to find events where our objective function $S$ is above some threshold $\gamma$.
 We can express this unknown probability as the expectation
 \begin{align} \label{eq:expect}
@@ -87,23 +87,23 @@ But for rare-event simulations where the probability of a target event occurring
 The challenge of the minimization in \cref{eq:min} then becomes choosing the density function for the true distribution $f(\vec{x})$. 
 Importance sampling tells us that the optimal importance sampling density can be reduced to
 \begin{align*}
-    f^*(\vec{x}) = \frac{\mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x} \mid \vec{\theta})}{\ell}
+    f^*(\vec{x}) = \frac{\mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x}; \vec{\theta})}{\ell}
 \end{align*}
 thus resulting in the optimization problem:
 \begin{align*}
-    \vec{\theta}_g^* &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} f^*(\vec{x})\log g(\vec{x} \mid \vec{\theta}_g) d\vec{x}\\
-                   &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} \frac{\mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x} \mid \vec{\theta})}{\ell}\log g(\vec{x} \mid \vec{\theta}_g) d\vec{x}
+    \vec{\theta}_g^* &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} f^*(\vec{x})\log g(\vec{x}; \vec{\theta}_g) d\vec{x}\\
+                   &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} \frac{\mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x}; \vec{\theta})}{\ell}\log g(\vec{x}; \vec{\theta}_g) d\vec{x}
 \end{align*}
-Note that since we assume $f$ and $g$ belong to the same family of distributions, we get that $f(\vec{x}) = g(\vec{x} \mid \vec{\theta}_g)$.
+Note that since we assume $f$ and $g$ belong to the same family of distributions, we get that $f(\vec{x}) = g(\vec{x}; \vec{\theta}_g)$.
 Now notice that $\ell$ is independent of $\vec{\theta}_g$, thus we can drop $\ell$ and get the final optimization problem of:
 \begin{align} \label{eq:opt}
-    \vec{\theta}_g^* &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} \mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x} \mid \vec{\theta}) \log g(\vec{x} \mid \vec{\theta}_g) d\vec{x}\\\nonumber
-                   &= \argmin_{\vec{\theta}_g} - \E_{\vec{\theta}}[ \mathbbm{1}_{(S(\vec{x}) \ge \gamma)} \log g(\vec{x} \mid \vec{\theta}_g)]
+    \vec{\theta}_g^* &= \argmin_{\vec{\theta}_g} - \int\limits_{\vec{x} \in \mathcal{X}} \mathbbm{1}_{(S(\vec{x}) \ge \gamma)}g(\vec{x}; \vec{\theta}) \log g(\vec{x}; \vec{\theta}_g) d\vec{x}\\\nonumber
+                   &= \argmin_{\vec{\theta}_g} - \E_{\vec{\theta}}[ \mathbbm{1}_{(S(\vec{x}) \ge \gamma)} \log g(\vec{x}; \vec{\theta}_g)]
 \end{align}
 
 The CE-method uses a multi-level algorithm to estimate $\vec{\theta}_g^*$ iteratively.
 The parameter $\vec{\theta}_k$ at iteration $k$ is used to find new parameters $\vec{\theta}_{k^\prime}$ at the next iteration $k^\prime$.
-The threshold $\gamma_k$ becomes smaller that its initial value, thus artificially making events \textit{less rare} under $\vec{X} \sim g(\vec{x} \mid \vec{\theta}_k)$.
+The threshold $\gamma_k$ becomes smaller that its initial value, thus artificially making events \textit{less rare} under $\vec{X} \sim g(\vec{x}; \vec{\theta}_k)$.
 
 In practice, the CE-method algorithm requires the user to specify a number of \textit{elite} samples $m_\text{elite}$ which are used when fitting the new parameters for iteration $k^\prime$.
 Conveniently, if our distribution $g$ belongs to the \textit{natural exponential family} then the optimal parameters can be found analytically \cite{Kochenderfer2019}. For a multivariate Gaussian distribution parameterized by $\vec{\mu}$ and $\mat{\Sigma}$, the optimal parameters for the next iteration $k^\prime$ correspond to the maximum likelihood estimate (MLE):
@@ -125,12 +125,12 @@ Note that a variety of input distributions for $g$ are supported, but we focus o
   \begin{algorithmic}
   \Function{CrossEntropyMethod}{}($S, g, m, m_\text{elite}, k_\text{max}$)
     \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $\mat{X} \sim g(\;\cdot \mid \vec{\theta}_k)$ where $\mat{X} \in \R^m$
+        \State $\mat{X} \sim g(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^m$
         \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$
         \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot \mid \vec{\theta}_k), \e)$
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot\;; \vec{\theta}_k), \e)$
     \EndFor
-    \State \Return $g(\;\cdot \mid \vec{\theta}_{k_\text{max}})$
+    \State \Return $g(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
   \EndFunction
   \end{algorithmic}
   \caption{\label{alg:cem} Cross-entropy method.}
@@ -144,31 +144,32 @@ Formally, a Gaussian mixture model (GMM) is defined by its parameters $\vec{\mu}
 The probability density of the GMM then becomes:
 %% Mixture model PDF
 \begin{gather*}
-    P( \mat{X} = \vec{x} \mid \vec{\mu}, \mat{\Sigma}, \vec{w}) = \sum_{i=1}^n w_i \Normal(\vec{x} \mid \vec{\mu}_i, \mat{\Sigma}_i)
+    P( \mat{X} = \vec{x} ; \vec{\mu}, \mat{\Sigma}, \vec{w}) = \sum_{i=1}^n w_i \Normal(\vec{x} ; \vec{\mu}_i, \mat{\Sigma}_i)
 \end{gather*}
 
 To fit the parameters of a Gaussian mixture model, it is well known that the \textit{expectation-maximization (EM)} algorithm can be used \cite{dempster1977maximum,aitkin1980mixture}. 
 The EM algorithm seeks to find the maximum likelihood estimate of the hidden variable $H$ using the observed data defined by $E$.
 Intuitively, the algorithm alternates between an expectation step (E-step) and a maximization step (M-step) to guarantee convergence to a local minima.
-A simplified EM algorithm is provide in \cref{alg:em} for reference and we refer to \cite{dempster1977maximum,aitkin1980mixture} for further reading.
+% A simplified EM algorithm is provide in \cref{alg:em} for reference and we refer to \cite{dempster1977maximum,aitkin1980mixture} for further reading.
+We refer to \cite{dempster1977maximum,aitkin1980mixture} for further reading on the EM algorithm.
 
 %% Expectation Maximization
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{ExpectationMaximization}{$H, E, \vec{\theta}$}
-    \For{\textbf{E-step}}
-        \State Compute $Q(h) = P(H=h \mid E=e, \vec{\theta})$ for each $h$ % (use any probabilistic inference algorithm)
-        \State Create weighted points: $(h,e)$ with weight $Q(h)$
-    \EndFor
-    \For{\textbf{M-step}}
-        \State Compute $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
-    \EndFor
-    \State Repeat until convergence.
-    \State \Return $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:em} Expectation-maximization.}
-\end{algorithm}
+% \begin{algorithm}[ht]
+%   \begin{algorithmic}
+%   \Function{ExpectationMaximization}{$H, E, \vec{\theta}$}
+%     \For{\textbf{E-step}}
+%         \State Compute $Q(h) = P(H=h \mid E=e, \vec{\theta})$ for each $h$ % (use any probabilistic inference algorithm)
+%         \State Create weighted points: $(h,e)$ with weight $Q(h)$
+%     \EndFor
+%     \For{\textbf{M-step}}
+%         \State Compute $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
+%     \EndFor
+%     \State Repeat until convergence.
+%     \State \Return $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
+%   \EndFunction
+%   \end{algorithmic}
+%   \caption{\label{alg:em} Expectation-maximization.}
+% \end{algorithm}
 
 
 
@@ -206,13 +207,13 @@ We refer to \cite{Kochenderfer2019} for a detailed overview of Gaussian processe
 
 
 
-\section{Algorithms} \label{sec:algorithms}
+\section{Algorithms} \label{sec:cem_algorithms}
 We can now describe the cross-entropy method variants introduced in this work.\footnote{Code available at \href{https://github.com/mossr/CrossEntropyVariants.jl}{https://github.com/mossr/CrossEntropyVariants.jl}}
 This section will first cover the main algorithm introduced, the cross-entropy surrogate method (CE-surrogate).
 Then we introduce a modification to the CE-surrogate method, namely the cross-entropy mixture method (CE-mixture).
 Lastly, we describe various evaluation schedules for redistributing objective function calls over the iterations.
 
-\subsection{Cross-Entropy Surrogate Method} \label{sec:alg_ce_surrogate}
+\subsection{Cross-Entropy Surrogate Method} \label{sec:cem_alg_ce_surrogate}
 The main CE-method variant we introduce is the cross-entropy surrogate method (CE-surrogate).
 The CE-surrogate method is a superset of the CE-method, where the differences lie in the evaluation scheduling and modeling of the elite set using a surrogate model.
 The goal of the CE-surrogate algorithm is to address the shortcomings of the CE-method when the number of objective function calls is sparse and the underlying objective function $S$ has multiple local minima.
@@ -232,13 +233,13 @@ Finally, the distribution $\M$ is fit to the elite set $\bfE$ and the distributi
   \Function{CE-Surrogate}{$S$, $\M$, $m$, $m_\text{elite}$, $k_\text{max}$}
     \For {$k \in [1,\ldots,k_\text{max}]$}
         \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$
-        \State $\mat{X} \sim \M(\;\cdot \mid \vec{\theta}_k)$ where $\mat{X} \in \R^m$
+        \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^m$
         \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$
         \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$
         \State $\bfE \leftarrow \textproc{ModelEliteSet}(\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite})$
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot \mid \vec{\theta}_k), \bfE)$
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot\;; \vec{\theta}_k), \bfE)$
     \EndFor
-    \State \Return $\M(\;\cdot \mid \vec{\theta}_{k_\text{max}})$
+    \State \Return $\M(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
   \EndFunction
   \end{algorithmic}
   \caption{\label{alg:ce_surrogate} Cross-entropy surrogate method.}
@@ -264,7 +265,7 @@ The resulting concatenated elite set $\bfE$ is returned.
   \Function{ModelEliteSet}{$\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite}$}
     % Fit to entire population!
     \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ % Squared exponential, NelderMead
-    \State $\mat{X}_\text{m} \sim \M(\;\cdot \mid \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{10m}$
+    \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{10m}$
     \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$
     \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$
     \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$
@@ -288,9 +289,9 @@ In our case, we recommend using a small $k_\text{max}$ of around $2$ so the subc
   \begin{algorithmic}
   \Function{SubEliteSet}{$\surrogate, \M, \e$}
     \State $\e_\text{sub} \leftarrow \emptyset$
-    \State $\m \leftarrow \{ e_x \in \e \mid \Normal(e_x, \M.\Sigma) \}$
+    \State $\m \leftarrow \{ e_x \in \e ; \Normal(e_x, \M.\Sigma) \}$
     \For {$\m_i \in \m$}
-        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i \mid \theta_{\text{CE}})$
+        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i ; \theta_{\text{CE}})$
         \State $\e_\text{sub} \leftarrow \{\e_\text{sub}\} \cup \{\textproc{Best}(\m_i)\}$
     \EndFor
     \State \Return $\e_\text{sub}$
@@ -300,7 +301,7 @@ In our case, we recommend using a small $k_\text{max}$ of around $2$ so the subc
 \end{algorithm}
 
 
-\subsection{Cross-Entropy Mixture Method} \label{sec:alg_ce_mixture}
+\subsection{Cross-Entropy Mixture Method} \label{sec:cem_alg_ce_mixture}
 We refer to the variant of our CE-surrogate method that takes an input \textit{mixture model} $\M$ as the cross-entropy mixture method (CE-mixture).
 The CE-mixture algorithm is identical to the CE-surrogate algorithm, but calls a custom \smallcaps{Fit} function to fit a mixture model to the elite set $\bfE$.
 The input distribution $\M$ is cast to a mixture model using the subcomponent distributions $\m$ as the components of the mixture.
@@ -308,7 +309,7 @@ We use the default uniform weighting for each mixture component.
 The mixture model $\M$ is then fit using the expectation-maximization algorithm shown in \cref{alg:em}, and the resulting distribution is returned.
 The idea is to use the distributions in $\m$ that are centered around each true-elite as the components of the casted mixture model.
 Therefore, we would expect better performance of the CE-mixture method when the objective function has many competing local minima.
-Results in \cref{sec:results} aim to show this behavior.
+Results in \cref{sec:cem_results} aim to show this behavior.
 
 %% CE-mixture (fit)
 \begin{algorithm}[ht]
@@ -316,14 +317,14 @@ Results in \cref{sec:results} aim to show this behavior.
   \Function{Fit}{$\M, \m, \bfE$}
     \State $\M \leftarrow \operatorname{Mixture}( \m )$
     \State $\mathbf{\hat{\vec{\theta}}} \leftarrow \textproc{ExpectationMaximization}(\M, \bfE)$
-    \State \Return $\M(\;\cdot \mid \mathbf{\hat{\vec{\theta}}})$
+    \State \Return $\M(\;\cdot\;; \mathbf{\hat{\vec{\theta}}})$
   \EndFunction
   \end{algorithmic}
   \caption{\label{alg:ce_mixture_fit} Fitting mixture models (used by CE-mixture).}
 \end{algorithm}
 
 
-\subsection{Evaluation Scheduling} \label{sec:alg_eval_schedule}
+\subsection{Evaluation Scheduling} \label{sec:cem_alg_eval_schedule}
 Given the nature of the CE-method, we expect the covariance to shrink over time, thus resulting in a solution with higher confidence.
 Yet if each iteration is given the same number of objective function evaluations $m$, there is the potential for elite samples from early iterations dominating the convergence.
 Therefore, we would like to redistribute the objective function evaluations throughout the iterations to use more truth information early in the process.
@@ -334,7 +335,7 @@ Evaluation schedules can also be ad-hoc and manually prescribed based on the cur
 We provide the evaluation schedule we use that follows a Geometric distribution with parameter $p$ in \cref{alg:evaluation_schedule}.
 We denote $G \sim \Geo(p)$ to be a random variable that follows a truncated Geometric distribution with the probability mass function $p_G(k) = p(1 - p)^k$ for $k \in \{0, 1, 2, \ldots, k_\text{max}\}$. % Geo(p) PMF
 Note the use of the integer rounding function (e.g., $\round{x}$), which we later have to compensate for towards the final iterations.
-Results in \cref{sec:results} compare values of $p$ that control the redistribution of evaluations.
+Results in \cref{sec:cem_results} compare values of $p$ that control the redistribution of evaluations.
 
 
 %% EvaluationSchedule
@@ -356,7 +357,7 @@ Results in \cref{sec:results} compare values of $p$ that control the redistribut
 \end{algorithm}
 
 
-\section{Experiments} \label{sec:experiments}
+\section{Experiments} \label{sec:cem_experiments}
 In this section, we detail the experiments we ran to compare the CE-method variants and evaluation schedules.
 We first introduce a test objective function we created to stress the issue of converging to local minima. 
 We then describe the experimental setup for each of our experiments and provide an analysis and results.
@@ -400,11 +401,11 @@ We add a final component to be our global minimum centered at $\mathbf{\tilde{\v
 We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights:
 
 \begin{align*}
-    \mathcal{S}(\vec{x}) &= -P(\Sierra = \vec{x}) = -\frac{1}{|\Sierra|}\sum_{j=1}^{n}\Normal(\vec{x} \mid \vec{\mu}_j, \mat{\Sigma}_j)
+    \mathcal{S}(\vec{x}) &= -P(\Sierra = \vec{x}) = -\frac{1}{|\Sierra|}\sum_{j=1}^{n}\Normal(\vec{x} ; \vec{\mu}_j, \mat{\Sigma}_j)
 \end{align*}
 An example of six different objective functions generated using the sierra function are shown in \cref{fig:sierra}, sweeping over the spread rate $\eta$, with and without decay.
 
-\subsection{Experimental Setup} \label{sec:experiment_setup}
+\subsection{Experimental Setup} \label{sec:cem_experiment_setup}
 Experiments were run to stress a variety of behaviors of each CE-method variant.
 The experiments are split into two categories: algorithmic and scheduling.
 The algorithmic category aims to compare features of each CE-method variant while holding common parameters constant (for a better comparison).
@@ -439,7 +440,7 @@ For all of the experiments, we use a common setting of the following parameters 
 \end{equation*}
 
 
-\subsubsection{Algorithmic Experiments} \label{sec:alg_experiments}
+\subsubsection{Algorithmic Experiments} \label{sec:cem_alg_experiments}
 We run three separate algorithmic experiments, each to test a specific feature.
 For our first algorithmic experiment (1A), we want to test each algorithm when the user-defined mean is centered at the global minimum and the covariance is arbitrarily wide enough to cover the design space.
 Let $\M$ be a distribution parameterized by $\vec{\theta} = (\vec{\mu}, \mat{\Sigma})$, and for experiment (1A) we set the following:
@@ -486,7 +487,7 @@ We use the same mean and covariance defined for experiment (1A):
 \end{equation*}
 
 
-\subsubsection{Scheduling Experiments} \label{sec:schedule_experiments}
+\subsubsection{Scheduling Experiments} \label{sec:cem_schedule_experiments}
 In our final experiment (2), we test the evaluation scheduling heuristics which are based on the Geometric distribution.
 We sweep over the parameter $p$ that determines the Geometric distribution which controls the redistribution of objective function evaluations.
 In this experiment, we compare the CE-surrogate methods using the same setup as experiment (1B), namely the far off-centered mean.
@@ -494,7 +495,7 @@ We chose this setup to analyze exploration schemes when given very little inform
 
 
 
-\subsection{Results and Analysis} \label{sec:results}
+\subsection{Results and Analysis} \label{sec:cem_results}
 
 \begin{figure}[!hb]
   % \centering
@@ -588,7 +589,7 @@ Notice that the results of experiment (1C) shown in \cref{fig:experiment_1c} fol
 
 
 
-\section{Conclusion} \label{sec:conclusion}
+\section{Discussion} \label{sec:cem_discussion}
 We presented variants of the popular cross-entropy method for optimization of objective functions with multiple local minima.
 Using a Gaussian processes-based surrogate model, we can use the same number of true objective function evaluations and achieve better performance than the standard CE-method on average.
 We also explored the use of a Gaussian mixture model to help find global minimum in multimodal objective functions.
