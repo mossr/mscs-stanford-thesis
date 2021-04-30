@@ -2,5 +2,5 @@
 S = paraboloid # objective function
 𝐌 = MvNormal([0, 0], [200 0; 0 200]) # proposal distribution
 
-(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌; basis=:squared)
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌; basis=:squared) # squared radial basis surrogate
 \end{lstlisting}

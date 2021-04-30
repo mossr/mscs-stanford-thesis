@@ -1,25 +1,23 @@
-Before safety-critical autonomous systems are deployed into the real-world, we first must validate their safety.
-One common approach is to stress test the systems in simulation.
+Before safety-critical autonomous systems are deployed into the real-world, we must first ensure their validity.
+One common approach for validation is to stress test these systems in simulation.
 This thesis proposes several techniques to aid in efficient stress testing of black-box systems, especially when those systems are computationally expensive to evaluate.
 We first introduce novel variants of the cross-entropy method for stochastic optimization used to find rare failure events.
-The original cross-entropy method relies on enough objective function calls to accurately estimate the optimal parameters of the underlying distribution and may get stuck in local minima.
+The original cross-entropy method relies on enough objective function calls to accurately estimate the optimal parameters of the proposal distribution and may get stuck in local minima.
 The variants we introduce attempt to address these concerns and the primary idea is to use every sample to build a surrogate model to offload computation from an expensive system under test.
 To test our approach, we created a parameterized test objective function with many local minima and a single global minimum, where the test function can be adjusted to control the spread and distinction of the minima.
 % Experiments were run to stress the cross-entropy method variants and results indicate that the surrogate model-based approach reduces local minima convergence using the same number of function evaluations.
 
-To find failure events and their likelihoods in computationally expensive sequential decision making systems, we propose a modification to the black-box stress testing approach called \textit{adaptive stress testing}.
+To find failure events and their likelihoods in computationally expensive open-loop systems, we propose a modification to the black-box stress testing approach called \textit{adaptive stress testing}.
 This modification generalizes adaptive stress testing to be broadly applied to episodic systems, where a reward is only received at the end of an episode.
 To test this approach, we analyze an aircraft trajectory predictor from a developmental commercial flight management system.
 The intention of this work is to find likely failures and report them back to the developers so they can address and potentially resolve shortcomings of the system before deployment. 
-We use a modified Monte Carlo tree search algorithm with progressive widening as our adversarial reinforcement learner.
- % and compared performance to direct Monte Carlo simulations and to the cross-entropy method as an alternative importance sampling baseline.
-The goal is to find potential problems otherwise not found by traditional requirements-based avionics testing.
+We use a modified Monte Carlo tree search algorithm with progressive widening as our adversarial reinforcement learner with the goal of finding potential problems otherwise not found by traditional requirements-based avionics testing.
 % Results indicate that our adaptive stress testing approach finds more failures with higher likelihoods relative to the baselines.
 
-When validating a system that relies on a static validation dataset, one could exhaustively evalute the entire dataset, yet that process may be computationally intractable especially when testing minor modification to the system under test.
+When validating a system that relies on a static validation dataset, one could exhaustively evalute the entire dataset, yet that process may be computationally intractable especially when validating minor modification to the system under test.
 To address this, we reformulate the problem to intelligently select candidate validation data points that we predict to likely cause a failure, using knowledge of the system failures experienced so far.
 We propose an adaptive black-box validation framework that will learn system weaknesses over time and exploit this knowledge to propose validation samples that will likely result in a failure.
-To further reduce computational load, we use a low-dimensional encoded representation of inputs to train the adversarial failure classifier, which selects candidate failures to evaluate.
+To further reduce computational load, we use a low-dimensional encoded representation of inputs to train the adversarial failure classifier, which will select candidate failures to evaluate.
 % Experiments were run to test our approach against a random candidate selection process and we also compare against full knowledge of the true system failures.
 % We stress test a black-box neural network classifier trained on the MNIST dataset,
 % and results show that using our framework, the adversarial failure classifier selects failures about $3$ times more often than random.

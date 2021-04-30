@@ -1,37 +1,37 @@
-Finding failures in a validation dataset may be computationally expensive if we search over the entire dataset.
+Black-box systems are not always sequential decision making systems, and to validate non-sequential systems we have to reformulate the problem.
+When validating a non-sequential black-box system, exhaustively evaluating over the entire validation dataset may be computationally intractable.
 Then the challenge becomes how to intelligently select candidate inputs that are likely to lead to failures.
-We are also interested in finding failures in black-box systems, i.e., systems where we can only pass inputs and observe outputs---without any knowledge of the inner-workings of the system.
 The motivation to find such candidate failure inputs is to reduce the need to exhaustively evaluate an entire validation dataset, especially for black-box systems that may be computationally expensive to call.
 Each input sample in the dataset may also be high-dimensional, therefore we also want to learn a low-dimensional representation of the dataset and use that representation to learn features that caused failures.
-An adversarial failure classifier will input the low-dimensional representation and determine if a sampled input will likely result in a failure.
+We propose an adversarial failure classifier that inputs the low-dimensional representation and determines if a sampled input will likely result in a failure.
 Our proposed framework combines the components of a dataset encoder, an adversarial failure classifier, and a candidate failure selector to propose dataset inputs that will likely result in failure, all to reduce the computational cost of evaluating the system under test and to focus only on evaluating predicted failures.
 The framework is open sourced and available under the MIT license.\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}}
 
 \section{Related Work}
 Current approaches to validate black-box systems focus their search over input disturbances to find failures \citep{corso2020survey}.
-A black-box reinforcement learning approach known as adaptive stress testing (described in \cref{cha:episodic_ast}) has been used to find the most likely failures in aircraft collision avoidance systems \citep{lee2015adaptive, lee2020adaptive}, aircraft flight management systems \citep{moss2020adaptive}, and autonomous vehicles \citep{koren2018adaptive, koren2019efficient}.
+Adaptive stress testing---the black-box reinforcement learning approach described in the previous chapter---has been used to find the most likely failures in aircraft collision avoidance systems \citep{lee2015adaptive, lee2020adaptive}, aircraft flight management systems \citep{moss2020adaptive}, and autonomous vehicles \citep{koren2018adaptive, koren2019efficient}.
 An underlying assumption of the AST problem formulation is that the system under test can be modeled as a sequential decision making process with explicitly defined states.
 This assumption limits the application of AST for validation over a dataset and ultimately creates \textit{more} data to validate due to applying input disturbances.
 Other approaches use model-based clustering to efficiently sample large datasets, but rely on tuned initialization parameters for good performance \citep{wehrens2004model}.
 Bayesian methods have been used to efficiently sample data from large hierarchical datasets using techniques to fit clusters over randomly partitioned subsets of the data \citep{huang2005sampling}.
 To be effective, these techniques assume hierarchical structure in the data. 
 Compression-based approaches have also been applied to reduce data size without loss of useful information \citep{ferrari2013handling}, but are generally domain specific.
-The most straightforward approach is to evaluate the system exhaustively over the entire validation dataset, which may be expensive and is the main motivation of our proposed framework.
+The most straightforward approach is to evaluate the system exhaustively over the entire validation dataset, which may be expensive and is the main motivation of our framework.
 
 
 
 \section{Dataset and Features}
-We are using the MNIST handwritten digit dataset \citep{deng2012mnist} as our collection of inputs we want to selectively sample.
+We use the MNIST handwritten digit dataset \citep{deng2012mnist} as our collection of inputs we want to selectively sample.
 We chose MNIST because it is a well-known machine learning dataset with many benchmarks, and is small enough to quickly iterate our framework without worrying about computational concerns.
 The MNIST training data contains $60{,}000$ gray-scale images of handwritten digits, each represented as $28\times28$ pixels. The test dataset contains $10{,}000$ gray-scale images with the same $28\times28$ pixel dimensions. For feature extraction, we left that up to the autoencoder described in \Cref{sec:autoencoder}.
 
 
 
 \subsection{Black-Box System Under Test}
-\begin{wrapfigure}{r}{0.2\textwidth}
+\begin{wrapfigure}{r}{0.25\textwidth}
   \vspace{-30pt}
   \centering
-  \centerline{\includegraphics[width=0.15\textwidth]{figures/weakness_rec/MNIST-failure-7(1).png}}
+  \centerline{\includegraphics[width=0.2\textwidth]{figures/weakness_rec/MNIST-failure-7(1).png}}
   \caption{Example failure (i.e., misclassification) which classified this image as a $1$ instead of a $7$.}
   \label{fig:mnist_nn_failure}
 \end{wrapfigure}
@@ -49,10 +49,10 @@ We trained the system over $20$ epochs, with a mini-batch size of $1024$, and us
 
 
 \section{Method}
-Our proposed framework consists of two major components: a dataset autoencoder, and an adversarial failure selector. These components are iteratively called within a \textit{sampled validation loop}. The dataset autoencoder is used to sample $m$ low-dimensional representations of the encoded input samples $\tilde{\mathbf{x}}$. We encode inputs into a lower-dimensional space for two reasons: 1) to reduce the potential high-dimensionality of the inputs $\mathbf{x}$ and 2) to learn features in this low-dimensional space that likely caused failures.
+Our proposed framework, illustrated in \cref{fig:framework}, consists of two major components: a dataset autoencoder, and an adversarial failure selector. These components are iteratively called within a \textit{sampled validation loop}. The dataset autoencoder is used to sample $m$ low-dimensional representations of the encoded input samples $\tilde{\mathbf{x}}$. We encode inputs into a lower-dimensional space for two reasons: 1) to reduce the potential high-dimensionality of the inputs $\mathbf{x}$ and 2) to learn features in this low-dimensional space that likely caused failures.
 We then split the $m$ low-dimensional samples into a training set $\tilde{\mathcal{D}}_\text{train}$ and test set $\tilde{\mathcal{D}}_\text{test}$.
 The training set $\tilde{\mathcal{D}}_\text{train}$ is passed to an adversarial agent that learns characteristics of the low-dimensional feature representation that led to failures.
-We use a failure classifier as our adversary, and then predict which inputs led to failures over the test data $\tilde{\mathcal{D}}_\text{test}$, then map the predicted failures from the low-dimensional space back to the original representation, and then run the candidate inputs expected to result in a failure through the system under test. \Cref{fig:framework} illustrates each step of the validation framework.
+We use a failure classifier as our adversary, and then predict which inputs led to failures over the test data $\tilde{\mathcal{D}}_\text{test}$, then map the predicted failures from the low-dimensional space back to the original representation, and then run the candidate inputs expected to result in a failure through the system under test.
 
 
 \begin{figure}[t]
@@ -60,7 +60,7 @@ We use a failure classifier as our adversary, and then predict which inputs led 
 \resizebox{0.9\textwidth}{!}{%
     \includegraphics[page=1]{figures/weakness_rec/validation_diagram.pdf}
 }
-\caption{Validation framework---a dataset autoencoder $\mathcal{E}$ is trained on the entire validation dataset $\mathcal{D}_\text{test}$ consisting of input samples $\mathbf{x}$. Then $m$ samples of encoded low-dimensional representations of the inputs $\tilde{\mathbf{x}}$ are selected for this iteration $t$, denoted $\tilde{\mathbf{x}}_t^{(1:m)}$ for all $m$ samples. The low-dimensional representations are then split into a training and test dataset. The training dataset $\tilde{\mathcal{D}}_\text{train}$ is used to train an adversarial failure classifier $\mathcal{A}$ on the encoded representations. Then the test dataset $\tilde{\mathcal{D}}_\text{test}$ is used to select candidate failures $\tilde{\mathbf{x}}_c$ as predicted by the adversary. Finally, the candidate failures from the adversary $\tilde{\mathbf{x}}_c$ are mapped back to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$ and evaluated by the system under test $\mathcal{S}$.}
+\caption{Validation framework: a dataset autoencoder $\mathcal{E}$ is trained on the entire validation dataset $\mathcal{D}_\text{test}$ consisting of input samples $\mathbf{x}$. Then $m$ samples of encoded low-dimensional representations of the inputs $\tilde{\mathbf{x}}$ are selected for this iteration $t$, denoted $\tilde{\mathbf{x}}_t^{(1:m)}$ for all $m$ samples. The low-dimensional representations are then split into a training and test dataset. The training dataset $\tilde{\mathcal{D}}_\text{train}$ is used to train an adversarial failure classifier $\mathcal{A}$ on the encoded representations. Then the test dataset $\tilde{\mathcal{D}}_\text{test}$ is used to select candidate failures $\tilde{\mathbf{x}}_c$ as predicted by the adversary. Finally, the candidate failures from the adversary $\tilde{\mathbf{x}}_c$ are mapped back to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$ and evaluated by the system under test $\mathcal{S}$.}
 \label{fig:framework}
 \end{figure}
 
@@ -70,7 +70,7 @@ To get a low-dimensional representation of the inputs $\mathbf{x}$, we used an a
 We trained the autoencoder $\mathcal{E}$ on the MNIST test dataset $\mathcal{D}_\text{test}$ and sample from the low-dimensional representation $\tilde{\mathbf{x}}$ as inputs into our adversarial failure classifier.
 We use the MNIST test set because this is our input validation set---thus, we want our autoencoder to only have information about the validation set, without the need to have access to the training set used by the system under test.
 The autoencoder network maps the $28\times28$ input image $\mathbf x$ into a low-dimensional latent space of size $64$ using a $\LeakyReLU$ activation.
-Then the decoder will take the $64$-dimensional representation $\mathbf{\tilde x}$, again using a $\LeakyReLU$ activation layer, and attempt to recover the original input $\mathbf x'$.
+Then the decoder will take the $64$-dimensional representation $\tilde{\mathbf{x}}$, again using a $\LeakyReLU$ activation layer, and attempt to recover the original input $\mathbf x'$.
 We pre-trained the autoencoder over $20$ epochs, with a mini-batch size of $1000$, and tuned the network parameters using the Adam optimizer with a learning rate of $\alpha=1e^{-3}$.
 Training is unsupervised and we use the mean squared error loss function:
 \begin{equation*}

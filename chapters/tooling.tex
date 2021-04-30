@@ -1,13 +1,12 @@
 This chapter discusses open-source software tools built and used in the previous chapters.
-These tools were designed for general applications of this work and were written in the scientific computing language Julia.
-Open-source software is important for safety validation as it encourages reproducibility and enables others to apply these to different applications.
+These tools were designed for general applications of this work and were written in the scientific computing language Julia \cite{bezanson2017julia}.
+Open-source software is important for safety validation as it encourages reproducibility and enables others to apply these methods to different applications.
 More importantly, we view the field of validation as collaborative and non-competitive because ultimately safer systems benefit us all.
 We first discuss the adaptive stress testing package built for \cref{cha:episodic_ast}, then provide quick usage examples of the optimization package built for \cref{cha:cem_variants} and the weakness recognition framework built for \cref{cha:weakness_rec}. All software packages described in this section are publicly available under the MIT license.
 
 
 \section{POMDPStressTesting.jl Summary}\label{sec:pomdpstresstesting}
-\href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems through a technique called adaptive stress testing \cite{lee2019adaptive}.
-Adaptive stress testing (AST) has been used to find failures in safety-critical systems such as aircraft collision avoidance systems \cite{lee2015adaptive}, flight management systems \cite{moss2020adaptive}, and autonomous vehicles \cite{koren2018adaptive}.
+POMDPStressTesting.jl\footnote{\url{https://github.com/sisl/POMDPStressTesting.jl}} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems using adaptive stress testing \cite{lee2019adaptive}.
 The POMDPStressTesting.jl package is written in Julia \cite{bezanson2017julia} and is part of the wider POMDPs.jl ecosystem \cite{pomdps_jl}, which provides access to simulation tools, policies, visualizations, and---most importantly---solvers.
 We provide different solver variants including online planning algorithms such as Monte Carlo tree search \cite{coulom2006efficient} and deep reinforcement learning algorithms such as trust region policy optimization (TRPO) \cite{trpo} and proximal policy optimization (PPO) \cite{ppo}.
 Stochastic optimization solvers such as the cross-entropy method \cite{rubinstein1999cross} are also available and random search is provided as a baseline.
@@ -43,7 +42,7 @@ The interface is designed to easily extend to other autonomous system applicatio
 
 \subsection{Research and Industrial Usage}
 POMDPStressTesting.jl has been used to find likely failures in aircraft trajectory prediction systems (\cref{cha:episodic_ast}) \cite{moss2020adaptive}, which are flight-critical subsystems used to aid in-flight automation.
-A developmental commercial flight management system was stress tested so the system engineers could mitigate potential issues before system deployment.
+This software was used to stress test a development commercial FMS so that the system engineers could mitigate potential issues before system deployment.
 In addition to traditional requirements-based testing for avionics certification \cite{do178c}, this work is being used to find potential problems during development.
 There has also been research on the use of POMDPStressTesting.jl for assessing the risk of autonomous vehicles and determining failure scenarios of autonomous lunar rovers.
 
@@ -61,16 +60,17 @@ To illustrate why we found Julia to be our language of choice, below we present 
 
 As an example, to run an simple optimization problem, consider the following code:
 \input{algorithms/cem-variants-usage}
+Here we select the \texttt{sierra} test function described in \cref{sec:sierra} and optimize a multivariate Gaussian proposal distribution $\mathbf{M}$ using a call to \texttt{ce\_surrogate}.
 
-The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
+The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function, yet we provide other surrogate models including linear regression, polynomial regression, and radial basis regression. As an example, to use radial basis regression instead of a Gaussian process, you can specify a \texttt{basis} keyword input:
 \input{algorithms/cem-variants-usage-basis}
 
-Our package relies an other open-source Julia software including Distributions.jl \cite{distributions.jl}, GaussianMixtures.jl,\footnote{\url{https://github.com/davidavdav/GaussianMixtures.jl}} GaussianProcesses.jl \cite{gaussianprocesses.jl}, and Optim.jl \cite{mogensen2018optim}. Their own open-source contributions enabled the quick prototyping of our package and we thank their commitment and effort. We were inspired by \citefull{kochenderfer2019algorithms} and borrowed the \texttt{cross\_entropy\_method} algorithm from their work.
+Our package relies an other open-source Julia software including Distributions.jl \cite{distributions.jl}, GaussianMixtures.jl,\footnote{\url{https://github.com/davidavdav/GaussianMixtures.jl}} GaussianProcesses.jl \cite{gaussianprocesses.jl}, and Optim.jl \cite{mogensen2018optim}. Their own open-source contributions enabled the quick prototyping of our software and we appreciate their effort and commitment to open-source software. We were inspired by \citefull{kochenderfer2019algorithms} and borrowed the \texttt{cross\_entropy\_method} algorithm from their work.
 
 
 \section{FailureRepresentation.jl Summary}
 The FailureRepresentation.jl\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}} package captures the work from \cref{cha:weakness_rec} primarily for reproducibility but can also be extended to other black-box systems aside from the MNIST neural network classifier.
-This primarily requires the user to define a \texttt{predict(ℳ, x)} function given their system $\mathcal M$ and input $x$, replacing the \texttt{SystemUnderTest} module within the framework.
+This requires the user to define a \texttt{predict(ℳ, x)} function given their system $\mathcal M$ and input $x$, replacing the \texttt{SystemUnderTest} module within the framework.
 We also provide experiment code and pre-trained adversarial models produced from \cref{cha:weakness_rec}.
 
 A sample usage would load the user-defined system under test and the adversarial autoencoder, then call the \texttt{sampled\_validation\_iteration} function illustrated in \cref{fig:framework}.

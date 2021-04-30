@@ -1,5 +1,5 @@
-\chapter{Alternative FMS Failure Events}\label{sec:application_events}
-This section details alternative failure events investigated and their associated miss distance calculations when stress testing the trajectory predictions in a flight management system (FMS).
+\chapter{Alternative FMS Failure Events}\label{cha:fms_events}
+This section details alternative failure events investigated and their associated miss distance calculations when stress testing the trajectory predictions in a flight management system (FMS) performed in \cref{cha:episodic_ast}.
 Ultimately, analysis of these failure events showed their inadequacy and arc length failures were selected as the primary event.
 
 \section{Tangency Kinks}
@@ -19,6 +19,21 @@ Miss distance for the tangency kinks is calculated by first determining the azim
 \phantom{}
 
 \vspace{-6mm}
+\section{Disconnections}
+Disconnected lateral packets occur when two sequential lateral packets are not connected end-to-start, thus leaving a distance $\delta$ between them. A failure occured if this geodesic distance $\delta = \lVert e_i - p_{i+1} \rVert$ is above the threshold $\tau_d = 10$ \si{ft}.
+
+\begin{figure}[!ht]
+\centering
+\resizebox{0.6\columnwidth}{!}{\input{diagrams/disconnection.tex}}
+\caption{Disconnected failure event and miss distance.}
+\label{fig:disconnection}
+\end{figure}
+
+Miss distance is calculated as the threshold $\tau_d$ minus the maximum distance between the end points $e_i$ (or $s_i$ if no arc is provided) and the initial point $p_{i+1}$ of the next lateral packet:
+\begin{equation*}
+    d = \tau_d \; - \max\limits_{\substack{e_i \in L_i\\p_{i+1} \in L_{i+1}}}\lVert e_i - p_{i+1} \rVert
+\end{equation*}
+
 \section{Course Directions}
 In-bound and out-bound course directions may deviate from one another and can be classified as a failure event.
 Closely related to the \textit{disconnection} failure event, the course direction failures can arise when two sequential lateral packets are disconnected. This failure specifically looks for angle differences between the course-out $\theta_{\text{out}}$ and course-in $\theta_\text{in}$ directions of the sequential lateral packets. If this angle difference $\omega = \abs{\theta_\text{out} - \theta_\text{in}}$ is above the threshold $\tau_c = 1\si{\degree}$ then it is classified as a failure.
@@ -33,19 +48,4 @@ Closely related to the \textit{disconnection} failure event, the course directio
 Miss distance is calculated as how close to the threshold $\tau_c$ is the maximum wrapped angle difference between the course-out angle and course-in angle denoted by $\omega$, namely
 \begin{equation*}
     d = \tau_c - \max\limits_{\substack{\theta_\text{out} \in L_i\\\theta_\text{in} \in L_{i+1}}}\abs{\theta_\text{out} - \theta_\text{in}}.
-\end{equation*}
-
-\section{Disconnections}
-Disconnected lateral packets occur when two sequential lateral packets are not connected end-to-start, thus leaving a distance $\delta$ between them. If this geodesic distance $\delta = \lVert e_i - p_{i+1} \rVert$ is above the threshold $\tau_d = 10$ \si{ft} then a failure occurred.
-
-\begin{figure}[!ht]
-\centering
-\resizebox{0.6\columnwidth}{!}{\input{diagrams/disconnection.tex}}
-\caption{Disconnected failure event and miss distance.}
-\label{fig:disconnection}
-\end{figure}
-
-Miss distance is calculated as the threshold $\tau_d$ minus the maximum distance between the end points $e_i$ (or $s_i$ if no arc is provided) and the initial point $p_{i+1}$ of the next lateral packet:
-\begin{equation*}
-    d = \tau_d - \max\limits_{\substack{e_i \in L_i\\p_{i+1} \in L_{i+1}}}\lVert e_i - p_{i+1} \rVert
 \end{equation*}
