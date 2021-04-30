@@ -1,0 +1,56 @@
+The applications of complex systems often built using artificial intelligence algorithms for use in safety-critical domains is very promising and this work attempts to address how we can efficiently validate these systems before they're deployed.
+There are many challenges presented when dealing with complex, black-box system that require clever algorithms to solve the validation problem.
+We present several approaches to validation of black-box systems, which were applied to sequential decision making systems, non-sequential classification systems, and general objective functions.
+Here we reiterate the contributions of this thesis and discuss open questions within the field of black-box validation.
+
+\section{Summary of Contributions}\label{sec:summary_of_contributions}
+
+The main contributions of this thesis are algorithmic along with open-source tools to reproduce this work.
+We first introduced surrogate model-based extensions to the cross-entropy method algorithm used for stochastic optimization, particularly with an interest in applying the algorithms to computationally expensive objective functions with rare failure events.
+A byproduct of that work was an configurable test function with many local minima and a single global minimum; providing an infinite number of objectives to test, with control over their difficulty.
+We then propose a reformulation of the adaptive stress testing framework to validate episodic-based systems (i.e., systems that only receive a reward signal at the end of an episode) and apply this technique to stress test a developmental commercial flight management system.
+Next, we consider how to intelligently select data points in a large static dataset to validate black-box classification systems and develop a framework to apply this technique during a systems development cycle.
+Finally, we describe the open-source software developed for this thesis---all publicly available under the MIT license---both to reproduce our work and to be applied to other black-box validation applications.
+
+\paragraph{Cross-entropy method variants for expensive objective functions.}
+In \cref{cha:cem_variants}, we introduced variants of the popular cross-entropy method algorithm (CE-method) used for rare-event optimization.
+Using a Gaussian process as our surrogate model, \cref{sec:cem_results} shows that we can achieve better optimization performance than the standard CE-method while using the same number of true objective function evaluations.
+We achieve this by connecting ideas from the surrogate modeling community and introduced novel sample-efficient algorithms.
+These algorithms---i.e., CE-surrogate (\cref{alg:ce_surrogate}) and CE-mixture (\cref{alg:ce_mixture_fit})---use \textit{every} sample to fit a surrogate model, then for each elite sample will create a sub-component distribution centered around that sample, optimized through the standard CE-method using the surrogate objective.
+We tested our method in a variety of experiments and introduced a novel test function called \textit{sierra} (described in \cref{sec:sierra}) to control the spread and distinction of the local and global minima, and provide an analysis of the weak areas of the CE-method compared to our proposed variants.
+
+
+\paragraph{Episodic adaptive stress testing applied to aircraft trajectory predictions.} In \cref{cha:episodic_ast}, we extend the adaptive stress testing framework for sequential systems with episodic reward to find likely failures in an aircraft trajectory prediction system.
+This work reported likely failure cases back to the developers and engineers to mitigate potential shortcomings of the system before deployment.
+Our extension improves search performance by collecting the state transitions during the search, and evaluating the system at the end of a simulated rollout; enabled by or proposed episodic AST reward function (\cref{eq:modified_reward}).
+We modified the Monte Carlo tree search algorithm to fit this formulation by employing progressive widening strictly on the action space (\cref{alg:mcts-pw-action-widen} and \cref{alg:mcts-pw-deterministic-state}), collecting state transitions during the \textsc{Simulate} stage (\cref{alg:mcts-pw-simulate}), feeding the best action midway through the rollout to encourage exploration of promising actions (\cref{alg:mcts-pw-rollout}), and only evaluating the system (i.e., collect true reward signal) at the end of the rollout.
+These modification of MCTS help exploit failures to maximize their likelihood.
+Performance of our approach was compared to direct (random) Monte Carlo search and the cross-entropy method, and \cref{sec:ast_results} shows that our approach finds more failures with both higher severity and higher relative likelihood.
+This work is complementary to requirements-based avionics testing (e.g., DO-178C \cite{do178c}) and is currently being used for confidence testing during system development.
+
+
+\paragraph{Adversarial weakness recognition of black-box classification systems.}
+In \cref{cha:weakness_rec}, we reframe the black-box validation problem around classification systems that are typically validated across a large, static dataset.
+We proposed a framework that combines the components of a dataset encoder (to reduce dimensionality, thus computation), an adversarial failure classifier (trained on past failure experience), and a candidate failure selector to propose inputs from the dataset that will likely result in failure; all to reduce the computational cost of evaluating the system under test and to focus only on evaluating predicted failures.
+\Cref{sec:weakness_experiments} shows that our framework selects failures about 3 times more often than random, specifically when applied to a neural network classifier trained on the MNIST dataset.
+The main contribution outlined in \cref{fig:framework} is a general framework to efficiently apply this technique to other black-box classification systems.
+
+\paragraph{Open source tools for validation.}
+In \cref{cha:tooling}, we present the open-source software developed to support this thesis.
+We hold a principle that open-source software, and more specifically reproducibility, is vital in the field of validation.
+We view this field as collaborative and non-competitive; everyone wins when critical software is safer.
+Our software contributions enable the adaptive stress testing techniques described in \cref{cha:episodic_ast} to be broadly and quickly applied to other black-box systems (with or without the episodic restriction).
+We have also released the optimization algorithms detailed in \cref{cha:cem_variants} along with the configurable test function, again to be applied generally to other objective functions.
+Finally, we present the software used to define the framework from \cref{cha:weakness_rec}, both to reproduce the work and to allow users to easily extend to other black-box classification systems.
+
+
+\section{Future Work}
+Black-box validation presents interesting challenges and there are many ways the methods proposed in this thesis could be improved.
+Finding the most likely failure is a difficult problem itself---aside from strictly falsification.
+Improving the AST techniques to be more data efficient in its search could drastically improve the failure likelihood estimate \textit{and} speed-up falsification.
+This problem is not necessarily specific to AST, but rather many data-efficient reinforcement learning and black-box optimization algorithm improvements would directly transfer to the AST search.
+Data efficiency extensions involving the rollout stage of MCTS could be explored to produce a (biased) trajectory towards failures, rather than a random (unbiased) trajectory.
+The next steps in the validation process need to assess the risk of the found failures, and researching methods for risk assessment would close the loop on the full safety validation problem.
+Yet, in order to effectively assess risk we must collect or estimate a distribution over failures.
+The work in this thesis could be used as a means of collecting risk metrics during the search.
+Extensions in this space would enable risk assessment and would allow this work to answer more concrete questions like \textit{how safe is the system?} and \textit{what areas of weakness were found and exploited?}, among other interesting questions.

@@ -23,7 +23,7 @@
 
   \node (start) at +(0, \rad) [latlonstart, label = above:$s_1$] {};
   \node [rotate=-\ang] (end) at +(\ang:\rad) [latlon, label ={[label distance=-1mm]above:$e_1$}] {};
-  \draw[->, dashed, rotate around={\ang:(end)}] (end) -- node (nextstraight) [pos=0.75, label={below right:$\theta_{\text{out}}$},] {} (end |-, \rad/4.25);
+  \draw[->, dashed, rotate around={\ang:(end)}] (end) -- node (nextstraight) [pos=0.75, label={below right:$\;\;\theta_{\text{out}}$},] {} (end |-, \rad/4.25);
 
   \node (failinitial) at (0,\rad/2) [latlon, label = above:$p_2$] {};
   \node (failstart) at ($(failinitial) + (-0.25, 0)$) [latlonstart, label = above:$s_2$] {};
@@ -32,7 +32,7 @@
 
   \draw[-] (initial) -- node (ls) [label = {above:$\ell_1$}] {} (start);
 
-  \draw[->,dashed] ($(failinitial) + (0.32, 0)$) -- node (dist) [label={right:$\theta_{\text{in}}$},pos=0.05] {} (failinitial);
+  \draw[->,dashed] ($(failinitial) + (0.32, 0)$) -- node (dist) [label={right:$\;\theta_{\text{in}}$},pos=0.05] {} (failinitial);
   \draw[-] (failinitial) -- node (fs) [label={above:$\ell_2$}] {} (failstart);
 
   \draw [red,thick,dashed,rotate=180] (-0.24, -\rad/2) arc (0:135:\inner);

@@ -38,8 +38,6 @@
     \node (reward) [rewardstyle, below=1cm of learner,xshift=0cm] {Reward\\Function};
 
     \draw[->] (learner) -- (sim.west |- learner) node[pos=0.5,above]{seed $\bar{a}$};
-    \draw[->] (reward.north) -- (learner.south) node[pos=0.5,right]{reward $r$}; % DIFF: Changed from "right" to "left"
-    % \draw[<-] (reward) -| (reward -| sim.south) node[pos=0.5,above]{transition probability $p$,\\event $e$, miss distance $d$};
-    % \draw[<-] (reward) -| (sim.south) node[pos=0.25,above]{transition probability $p$,\\event $e$, miss distance $d$};
+    \draw[->] (reward.north) -- (learner.south) node[pos=0.5,right]{reward $r$};
     \draw[<-] (reward) -- (sim.west |- reward) node[pos=0.5,above]{terminal $\tau$,\\transition probability $p$,\\event $e$, miss distance $d$};
 \end{tikzpicture}

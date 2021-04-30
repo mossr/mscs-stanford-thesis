@@ -1,4 +1,3 @@
-% \section{Introduction}
 The cross-entropy (CE) method is a probabilistic optimization approach that attempts to iteratively fit a distribution to elite samples from an initial input distribution \cite{rubinstein2004cross,rubinstein1999cross}.
 The goal is to estimate a rare-event probability by minimizing the \textit{cross-entropy} between the two distributions \cite{de2005tutorial}.
 The CE-method has gained popularity in part due to its simplicity in implementation and straightforward derivation.
@@ -120,7 +119,7 @@ Next, the top $m_\text{elite}$ samples are stored in the elite set $\e$, and the
 This process is repeated for $k_\text{max}$ iterations and the resulting parameters $\vec{\theta}_{k_\text{max}}$ are returned.
 Note that a variety of input distributions for $g$ are supported, but we focus on the multivariate Gaussian distribution and the Gaussian mixture model in this work.
 
-%% CE-method
+ CE-method
 \begin{algorithm}[ht]
   \begin{algorithmic}
   \Function{CrossEntropyMethod}{}($S, g, m, m_\text{elite}, k_\text{max}$)
@@ -142,7 +141,7 @@ A standard Gaussian distribution is \textit{unimodal} and can have trouble gener
 A \textit{mixture model} is a weighted mixture of component distributions used to represent continuous multimodal distributions \cite{kochenderfer2015decision}.
 Formally, a Gaussian mixture model (GMM) is defined by its parameters $\vec{\mu}$ and $\mat{\Sigma}$ and associated weights $\w$ where $\sum_{i=1}^n w_i = 1$. We denote that a random variable $\mat{X}$ is distributed according to a mixture model as $\mat{X} \sim \operatorname{Mixture}(\vec{\mu}, \vec{\Sigma}, \vec{w})$.
 The probability density of the GMM then becomes:
-%% Mixture model PDF
+% Mixture model PDF
 \begin{gather*}
     P( \mat{X} = \vec{x} ; \vec{\mu}, \mat{\Sigma}, \vec{w}) = \sum_{i=1}^n w_i \Normal(\vec{x} ; \vec{\mu}_i, \mat{\Sigma}_i)
 \end{gather*}
@@ -150,26 +149,7 @@ The probability density of the GMM then becomes:
 To fit the parameters of a Gaussian mixture model, it is well known that the \textit{expectation-maximization (EM)} algorithm can be used \cite{dempster1977maximum,aitkin1980mixture}. 
 The EM algorithm seeks to find the maximum likelihood estimate of the hidden variable $H$ using the observed data defined by $E$.
 Intuitively, the algorithm alternates between an expectation step (E-step) and a maximization step (M-step) to guarantee convergence to a local minima.
-% A simplified EM algorithm is provide in \cref{alg:em} for reference and we refer to \cite{dempster1977maximum,aitkin1980mixture} for further reading.
 We refer to \cite{dempster1977maximum,aitkin1980mixture} for further reading on the EM algorithm.
-
-%% Expectation Maximization
-% \begin{algorithm}[ht]
-%   \begin{algorithmic}
-%   \Function{ExpectationMaximization}{$H, E, \vec{\theta}$}
-%     \For{\textbf{E-step}}
-%         \State Compute $Q(h) = P(H=h \mid E=e, \vec{\theta})$ for each $h$ % (use any probabilistic inference algorithm)
-%         \State Create weighted points: $(h,e)$ with weight $Q(h)$
-%     \EndFor
-%     \For{\textbf{M-step}}
-%         \State Compute $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
-%     \EndFor
-%     \State Repeat until convergence.
-%     \State \Return $\mathbf{\hat{\vec{\theta}}}_{\text{MLE}}$
-%   \EndFunction
-%   \end{algorithmic}
-%   \caption{\label{alg:em} Expectation-maximization.}
-% \end{algorithm}
 
 
 
@@ -227,12 +207,14 @@ The top $m_\text{elite}$ evaluations from $\mat{Y}$ are stored in $\e$.
 Using all of the current function evaluations $\mat{Y}$ from sampled inputs $\mat{X}$, a modeled elite set $\bfE$ is created to augment the sparse information provided by a low number of true objective function evaluations.
 Finally, the distribution $\M$ is fit to the elite set $\bfE$ and the distribution with the final parameters $\vec{\theta}_{k_\text{max}}$ is returned.
 
-%% CE-surrogate
+\vspace{5mm} % NOTE. To complement the \newpage below.
+
+% CE-surrogate
 \begin{algorithm}[ht]
   \begin{algorithmic}
   \Function{CE-Surrogate}{$S$, $\M$, $m$, $m_\text{elite}$, $k_\text{max}$}
     \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$ \algorithmiccomment{choose number of evaluations based on a schedule}
+        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$ \algorithmiccomment{number of evaluations from a schedule}
         \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|\M| \times m}$ \algorithmiccomment{draw $m$ samples from $\M$}
         \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using true objective $S$}
         \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from true objective}
@@ -245,8 +227,9 @@ Finally, the distribution $\M$ is fit to the elite set $\bfE$ and the distributi
   \caption{\label{alg:ce_surrogate} Cross-entropy surrogate method.}
 \end{algorithm}
 
+\newpage % NOTE.
 
-The main difference between the standard CE-method and the CE-surrogate variant lies in the call to \smallcaps{ModelEliteSet}.
+The main difference between the standard CE-method and the CE-surrogate variant lies in the call to \cref{alg:model_elite_set}, \smallcaps{ModelEliteSet}.
 The motivation is to use \textit{all} of the already evaluated objective function values $\mat{Y}$ from a set of sampled inputs $\mat{X}$.
 This way the expensive function evaluations---otherwise discarded---can be used to build a surrogate model of the underlying objective function.
 First, a surrogate model $\surrogate$ is constructed from the samples $\mat{X}$ and true objective function values $\mat{Y}$.
@@ -267,13 +250,13 @@ The resulting concatenated elite set $\bfE$ is returned.
     \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ \algorithmiccomment{fit a surrogate model to the samples} % Squared exponential, NelderMead
     \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{|\M| \times {10m}}$ \algorithmiccomment{draw $10m$ samples from $\M$}
     \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$ \algorithmiccomment{evaluate samples $\mat{X}_\text{m}$ using surrogate objective $\surrogate$}
-    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$ \algorithmiccomment{select model-elite samples output from surrogate objective}
+    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$ \algorithmiccomment{select model-elite samples from surrogate objective}
     \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$ \algorithmiccomment{generate sub-elite samples using surrogate $\surrogate$}
     \State $\bfE \leftarrow \{ \e \} \cup \{ \e_\text{model} \} \cup \{ \e_\text{sub} \}$ \algorithmiccomment{combine all elite samples into an elite set}
     \State \Return $\bfE$
   \EndFunction
   \end{algorithmic}
-  \caption{\label{alg:model_elite_set} Modeling elite set.}
+  \caption{\label{alg:model_elite_set} Modeling elite set using a surrogate objective.}
 \end{algorithm}
 
 To encourage exploration of promising areas of the design space, the algorithm \smallcaps{SubEliteSet} focuses on the already marked true-elites $\e$.
@@ -311,7 +294,7 @@ The idea is to use the distributions in $\m$ that are centered around each true-
 Therefore, we would expect better performance of the CE-mixture method when the objective function has many competing local minima.
 Results in \cref{sec:cem_results} aim to show this behavior.
 
-%% CE-mixture (fit)
+% CE-mixture (fit)
 \begin{algorithm}[ht]
   \begin{algorithmic}
   \Function{Fit}{$\M, \m, \bfE$}
@@ -338,7 +321,7 @@ Note the use of the integer rounding function (e.g., $\round{x}$), which we late
 Results in \cref{sec:cem_results} compare values of $p$ that control the redistribution of evaluations.
 
 
-%% EvaluationSchedule
+% EvaluationSchedule
 \begin{algorithm}[ht]
   \begin{algorithmic}
   \Function{EvaluationSchedule}{$k, k_\text{max}$}
@@ -363,7 +346,7 @@ We first introduce a test objective function we created to stress the issue of c
 We then describe the experimental setup for each of our experiments and provide an analysis and results.
 
 
-\subsection{Test Objective Function Generation}
+\subsection{Test Objective Function Generation}\label{sec:sierra}
 \begin{figure*}[!t]
   \centering
   \resizebox{0.8\textwidth}{!}{\input{figures/cem_variants/sierra_group.tex}}
@@ -373,30 +356,30 @@ We then describe the experimental setup for each of our experiments and provide 
   }
 \end{figure*}
 To stress the cross-entropy method and its variants, we created a test objective function called \textit{sierra} that is generated from a mixture model comprised of $49$ multivariate Gaussian distributions.
-We chose this construction so that we can use the negative peeks of the component distributions as local minima and can force a global minimum centered at our desired $\mathbf{\tilde{\vec{\mu}}}$.
+We chose this construction so that we can use the negative peeks of the component distributions as local minima and can force a global minimum centered at our desired $\mathbf{\widetilde{\vec{\mu}}}$.
 The construction of the sierra test function can be controlled by parameters that define the spread of the local minima.
-We first start with the center defined by a mean vector $\mathbf{\tilde{\vec{\mu}}}$ and we use a common covariance $\mathbf{\tilde{\mat{\Sigma}}}$:
+We first start with the center defined by a mean vector $\mathbf{\widetilde{\vec{\mu}}}$ and we use a common covariance $\mathbf{\widetilde{\mat{\Sigma}}}$:
 \begin{align*}
-    \mathbf{\tilde{\vec{\mu}}} &= [\mu_1, \mu_2], \quad \mathbf{\tilde{\mat{\Sigma}}} = \begin{bmatrix}\sigma & 0\\ 0 & \sigma \end{bmatrix}
+    \mathbf{\widetilde{\vec{\mu}}} &= [\mu_1, \mu_2], \quad \mathbf{\widetilde{\mat{\Sigma}}} = \begin{bmatrix}\sigma & 0\\ 0 & \sigma \end{bmatrix}
 \end{align*}
 Next, we use the parameter $\delta$ that controls the clustered distance between symmetric points:
 \begin{align*}
     \mat{G} &= \left\{[+\delta, +\delta], [+\delta, -\delta], [-\delta, +\delta], [-\delta, -\delta]\right\}
 \end{align*}
-We chose points $\mat{P}$ to fan out the clustered minima relative to the center defined by $\mathbf{\tilde{\vec{\mu}}}$:
+We chose points $\mat{P}$ to fan out the clustered minima relative to the center defined by $\mathbf{\widetilde{\vec{\mu}}}$:
 \begin{align*}
     \mat{P} &= \left\{[0, 0], [1, 1], [2, 0], [3, 1], [0, 2], [1, 3]\right\}
 \end{align*}
 The vector $\vec{s}$ is used to control the $\pm$ distance to create an `s' shape comprised of minima, using the standard deviation $\sigma$:
-$\vec{s} = \begin{bmatrix}+\sigma, -\sigma \end{bmatrix}$.
+$\vec{s} = [+\sigma, -\sigma]$.
 We set the following default parameters: standard deviation $\sigma=3$, spread rate $\eta=6$, and cluster distance $\delta=2$.
 We can also control if the local minima clusters ``decay'', thus making those local minima less distinct (where $\text{decay} \in \{0, 1\})$.
-The parameters that define the sierra function are collected into $\vec{\theta} = \langle \mathbf{\tilde{\vec{\mu}}}, \mathbf{\tilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$.
+The parameters that define the sierra function are collected into $\vec{\theta} = \langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$.
 Using these parameters, we can define the mixture model used by the sierra function as:
 \begin{gather*}
-    \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\tilde{\vec{\mu}}},\; \mathbf{\tilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right) \quad\text{for}\quad (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
+    \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\widetilde{\vec{\mu}}},\; \mathbf{\widetilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right) \quad\text{for}\quad (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
 \end{gather*}
-We add a final component to be our global minimum centered at $\mathbf{\tilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E[\Normal(\mathbf{\tilde{\vec{\mu}}}, \mathbf{\tilde{\mat{\Sigma}}}/(\sigma\eta))] = \mathbf{\tilde{\vec{\mu}}}$.
+We add a final component to be our global minimum centered at $\mathbf{\widetilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E[\Normal(\mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}/(\sigma\eta))] = \mathbf{\widetilde{\vec{\mu}}}$.
 We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights:
 
 \begin{align*}
@@ -420,7 +403,7 @@ Our final metric looks at the average runtime of each algorithm, noting that our
 
 For all of the experiments, we use a common setting of the following parameters for the sierra test function (shown in the top-right plot in \cref{fig:sierra}):
 \begin{equation*}
-    (\mathbf{\tilde{\vec{\mu}}} =[0,0],\; \sigma=3,\; \delta=2,\; \eta=6,\; \text{decay} = 1)
+    (\mathbf{\widetilde{\vec{\mu}}} =[0,0],\; \sigma=3,\; \delta=2,\; \eta=6,\; \text{decay} = 1)
 \end{equation*}
 
 \begin{figure*}[!t]
@@ -465,7 +448,7 @@ For our second algorithmic experiment (1B), we test a mean that is far off-cente
 \end{equation*}
 This experiment is used to test the ``exploration'' of the CE-method variants introduced in this work.
 In experiments (1A) and (1B), we set the following common parameters across each CE-method variant:
-%% CE-mixture hyperparameter settings
+% CE-mixture hyperparameter settings
 \begin{equation*}
     (k_\text{max} = 10,\; m=10,\; m_\text{elite}=5)^{(\text{1A,1B})}
 \end{equation*}
@@ -488,6 +471,7 @@ We use the same mean and covariance defined for experiment (1A):
 \end{equation*}
 
 
+\vspace{-8mm} % NOTE. Fix orphans.
 \subsubsection{Scheduling Experiments} \label{sec:cem_schedule_experiments}
 In our final experiment (2), we test the evaluation scheduling heuristics which are based on the Geometric distribution.
 We sweep over the parameter $p$ that determines the Geometric distribution which controls the redistribution of objective function evaluations.
@@ -497,15 +481,6 @@ We chose this setup to analyze exploration schemes when given very little inform
 
 
 \subsection{Results and Analysis} \label{sec:cem_results}
-
-% \begin{figure}[!hb]
-%   % \centering
-%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
-%   \caption{
-%     \label{fig:experiment_1a}
-%     Average optimal value for experiment (1A) when the initial mean is centered at the global minimum and the covariance sufficiently covers the design space.
-%   }
-% \end{figure}
 
 \Cref{fig:experiment_1a} shows the average value of the current optimal $\bar{b}_v$ for the three algorithms for experiment (1A). 
 One standard deviation is plotted in the shaded region.
@@ -517,26 +492,43 @@ The average runtime of the algorithms along with the performance metrics are sho
 \begin{figure*}[ht]
     \centering
     \subfloat[Average optimal value for experiment (1A) when the initial mean is centered at the global minimum and the covariance sufficiently covers the design space.]{%
-        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
+        \resizebox{0.47\textwidth}{!}{\input{figures/cem_variants/experiment1a.tex}}
         \label{fig:experiment_1a}
     }
     \hspace{2mm}
     \subfloat[Average optimal value for experiment (1B) when the initial mean is far from the global minimum with a wide covariance.]{%
-        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
+        \resizebox{0.47\textwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
         \label{fig:experiment_1b}
     }
     \hspace{2mm}
     \subfloat[Average optimal value for experiment (1C) when we restrict the number of objective function calls.]{%
-        \resizebox{0.45\textwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
+        \resizebox{0.47\textwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
         \label{fig:experiment_1c}
     }
     \caption{Cross-entropy method variant experiment results.}\label{fig:cem_experiments}
 \end{figure*}
 
 
+An apparent benefit of the standard CE-method is in its simplicity and speed.
+As shown in \cref{tab:cem_results}, the CE-method is the fastest approach by about 2-3 orders of magnitude compared to CE-surrogate and CE-mixture.
+The CE-mixture method is notably the slowest approach.
+Although the runtime is also based on the objective function being tested, recall that we are using the same number of true objective function calls in each algorithm, and the metrics we are concerned with in optimization are to minimize $\bar{b}_v$ and $\bar{b}_d$.
+We can see that the CE-surrogate method consistently out performs the other methods.
+Surprisingly, a uniform evaluation schedule performs the best even in the sparse scenario where the initial mean is far away from the global optimal.
+
+
+When the initial mean of the input distribution is placed far away from the global optimal, the CE-method tends to converge prematurely as shown in \cref{fig:experiment_1b}.
+This scenario is illustrated in \cref{fig:example_1b}.
+We can see that both CE-surrogate and CE-mixture perform well in this case.
+
+
+Given the same centered mean as before, when we restrict the number of objective function calls even further to just 50 we see interesting behavior.
+Notice that the results of experiment (1C) shown in \cref{fig:experiment_1c} follow a curve closer to the far away mean from experiment (1B) than from the same setup as experiment (1A). Also notice that the CE-surrogate results cap out at iteration 9 due to the evaluation schedule front-loading the objective function calls, thus leaving none for the final iteration (while still maintaining the same total number of evaluations of 50).
+
 \begin{table}[!ht]
+    \small
     \centering
-    \caption{\label{tab:cem_results} Experimental results.}
+    \caption{\label{tab:cem_results} Experimental Results.}
     \begin{tabular}{cllll} % p{3cm}
     \toprule
     \textbf{Exper.} & \textbf{Algorithm} & \textbf{Runtime} & $\bar{b}_v$ & $\bar{b}_d$\\
@@ -562,44 +554,6 @@ The average runtime of the algorithms along with the performance metrics are sho
     \end{tabular}
 \end{table}
 
-An apparent benefit of the standard CE-method is in its simplicity and speed.
-As shown in \cref{tab:cem_results}, the CE-method is the fastest approach by about 2-3 orders of magnitude compared to CE-surrogate and CE-mixture.
-The CE-mixture method is notably the slowest approach.
-Although the runtime is also based on the objective function being tested, recall that we are using the same number of true objective function calls in each algorithm, and the metrics we are concerned with in optimization are to minimize $\bar{b}_v$ and $\bar{b}_d$.
-We can see that the CE-surrogate method consistently out performs the other methods.
-Surprisingly, a uniform evaluation schedule performs the best even in the sparse scenario where the initial mean is far away from the global optimal.
-
-% \begin{figure}[!ht]
-%   % \centering
-%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1b.tex}}
-%   \caption{
-%     \label{fig:experiment_1b}
-%     Average optimal value for experiment (1B) when the initial mean is far from the global minimum with a wide covariance.
-%   }
-% \end{figure}
-
-When the initial mean of the input distribution is placed far away from the global optimal, the CE-method tends to converge prematurely as shown in \cref{fig:experiment_1b}.
-This scenario is illustrated in \cref{fig:example_1b}.
-We can see that both CE-surrogate and CE-mixture perform well in this case.
-
-% % % 
-
-
-% \begin{figure}[!ht]
-%   % \centering
-%   \resizebox{0.9\columnwidth}{!}{\input{figures/cem_variants/experiment1c.tex}}
-%   \caption{
-%     \label{fig:experiment_1c}
-%     Average optimal value for experiment (1C) when we restrict the number of objective function calls.
-%   }
-% \end{figure}
-
-
-Given the same centered mean as before, when we restrict the number of objective function calls even further to just 50 we see interesting behavior.
-Notice that the results of experiment (1C) shown in \cref{fig:experiment_1c} follow a curve closer to the far away mean from experiment (1B) than from the same setup as experiment (1A). Also notice that the CE-surrogate results cap out at iteration 9 due to the evaluation schedule front-loading the objective function calls, thus leaving none for the final iteration (while still maintaining the same total number of evaluations of 50).
-
-
-
 
 \section{Discussion} \label{sec:cem_discussion}
 We presented variants of the popular cross-entropy method for optimization of objective functions with multiple local minima.
@@ -614,10 +568,6 @@ Using this test function, we showed that the CE-surrogate algorithm achieves the
   \resizebox{0.6\columnwidth}{!}{\input{figures/cem_variants/example1b.pgf}}
   \caption{
     \label{fig:example_1b}
-    First iteration of the scenario in experiment (1B) where the initial distribution is far away form the global optimal. The red dots indicate the true-elites, the black dots with white outlines indicate the ``non-elites'' evaluated from the true objective function, and the white dots with black outlines indicate the samples evaluated using the surrogate model.
+    First iteration of the scenario in experiment (1B) where the initial distribution is far away form the global optimal. The red dots indicate the true-elites, the magenta dots with black outlines indicate the ``non-elites'' (i.e., all others) evaluated from the true objective function, and the white dots with black outlines indicate the samples evaluated using the surrogate model. Notice the trend of the white dots (those from the surrogate) that can help guide the proposal distribution towards the area of interest (in the top right).
   }
 \end{figure}
-
-
-
-% \printbibliography

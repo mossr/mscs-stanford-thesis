@@ -1,7 +1,5 @@
 \begin{tikzpicture}
   [
-    % scale=8,
-    % scale=16, every node/.style={scale=2},
     scale=16, every node/.style={scale=2},
     >=stealth,
     point/.style = {draw, circle,  fill = black, inner sep = 1pt},
@@ -18,10 +16,10 @@
   \def\ang{45}
 
   % Lateral packet #1
-  \node (initial) at +(0,1/4+\turnrad) [latlon] {}; %, label = above:$i_1$] {};
-  \node (center) at +(1/3,1/4) [point, inner sep=0.5pt] {}; %, label = {[label distance=-1mm]below:$c_1$}] {};
+  \node (initial) at +(0,1/4+\turnrad) [latlon] {};
+  \node (center) at +(1/3,1/4) [point, inner sep=0.5pt] {};
   \path (center) ++(90:\turnrad) node (start) [latlonstart, label = {[label distance=-1mm]above:$s_1$}] {};
-  \path (center) ++(90-\ang:\turnrad) node (end) [] {}; % [, label = {[label distance=-2.5mm]above right:$e_1$}] {};
+  \path (center) ++(90-\ang:\turnrad) node (end) [] {};
 
   \draw (center) circle (\turnrad) [dotted,thick];
 
@@ -35,10 +33,10 @@
   \draw[-] (initial) -- node (ls) [label = {[label distance=-2mm]above left:$\ell_1$}] {} (start);
 
   % Lateral packet #2
-  \node [rotate=-\ang] (initial2) at (end) [latlon] {}; %, label = right:$i_1$] {};
-  \node (center2) at +(2/3+-\turnrad,2*\turnrad) [point, inner sep=0.5pt] {}; %, label = {[label distance=-1mm]above:$c_2$}] {};
+  \node [rotate=-\ang] (initial2) at (end) [latlon] {};
+  \node (center2) at +(2/3+-\turnrad,2*\turnrad) [point, inner sep=0.5pt] {};
   \path (center2) ++(180+\ang:\turnrad) node [rotate=-\ang] (start2) [latlonstart, label = {[label distance=-1.5mm]below:$s_2$}] {};
-  \path (center2) ++(-\ang:\turnrad) node (end2) [] {}; % [, label = {[label/2 distance=-2.5mm]below right:$e_2$}] {};
+  \path (center2) ++(-\ang:\turnrad) node (end2) [] {};
 
   \draw (center2) circle (\turnrad) [dotted,thick];
 
@@ -53,10 +51,10 @@
 
 
   % Lateral packet #3
-  \node [rotate=\ang] (initial3) at (end2) [latlon] {}; %, label = above:$i_3$] {};
-  \node (center3) at +(3/3-2*\turnrad,1/4) [point, inner sep=0.5pt] {}; %, label = {[label distance=-1mm]below:$c_3$}] {};
+  \node [rotate=\ang] (initial3) at (end2) [latlon] {};
+  \node (center3) at +(3/3-2*\turnrad,1/4) [point, inner sep=0.5pt] {};
   \path (center3) ++(90+\ang:\turnrad) node [rotate=\ang] (start3) [latlonstart, label = {[label distance=-1.5mm]above:$s_3$}] {};
-  \path (center3) ++(90-\ang:\turnrad) node (end3) [] {}; % [, label = {[label distance=-3mm]above right:$e_3$}] {};
+  \path (center3) ++(90-\ang:\turnrad) node (end3) [] {};
 
   \draw (center3) circle (\turnrad) [dotted,thick];
 
@@ -71,10 +69,10 @@
 
 
   % Lateral packet #4 (no straight segment, arc only)
-  \node (initial4) at (end3) [] {}; %, label = above:$i_2$] {};
-  \path (initial4) ++(\ang:\turnrad/2) node (center4) [point, inner sep=0.5pt] {}; %, label = {[label distance=-1mm]above:$c_4$}] {};
+  \node (initial4) at (end3) [] {};
+  \path (initial4) ++(\ang:\turnrad/2) node (center4) [point, inner sep=0.5pt] {};
   \path (center4) ++(180+\ang:\turnrad/2) node [rotate=-\ang] (start4) [latlonstart, label = {[label distance=-2mm]below:$s_4$}] {};
-  \path (center4) ++(-\ang:\turnrad/2) node [rotate=\ang] (end4) [latlon] {}; %, label = {[label distance=-1mm]right:$e_4$}] {};
+  \path (center4) ++(-\ang:\turnrad/2) node [rotate=\ang] (end4) [latlon] {};
 
   \draw (center4) circle (\turnrad/2) [dotted,thick];
 
@@ -86,13 +84,8 @@
 
 
   % Lateral packet #5 (straight segment only)
-  \path (end4) ++(\ang+\ang*\turnrad/2:2*\turnrad) node (start5) [] {}; %, label = {[label distance=-1mm]above left:$s_4$}] {};
+  \path (end4) ++(\ang+\ang*\turnrad/2:2*\turnrad) node (start5) [] {};
 
   % straight segment line
   \draw[->] (end4) -- node (ls) [] {} (start5);
-
-  % dashed box around tangency check "zoom" waypoint and arc
-  % \node [draw, rectangle, dashed, minimum height=33mm, minimum width=60mm, xshift=-15mm, yshift=-5mm] (outline) at (start) [] {};
-  % \draw[->, dashed] (outline.north east) -- node (pointer) [] {} ($(outline.north east)+(0.5mm,0.5mm)$);
-
 \end{tikzpicture}

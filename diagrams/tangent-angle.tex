@@ -60,12 +60,12 @@
 
   \draw[->, rotate around={\ang:(end)}] (end) -- node (nextstraight) [very near end, label = {above:$\ell_2$},] {} (end |-, 0);
   \draw[red, ->, rotate around={\ang-\failang:(failend)}] (failend) -- node (failnextstraight) [red] {} (failend |-, 0);
-  \draw [red] (1.25*\rad*5.06/7,\rad) arc (0:-\failang*5.06/7:1.25*\rad); % "fail" angle (i.e. kink)
+  \draw [red] (1.25*\rad*5.06/7,\rad) arc (0:-\failang*5.06/7:1.25*\rad); % "fail" angle (i.e., kink)
   \draw[dotted,thick,->,red, rotate around={-\failang:(start)}] (start) -- node (fail) [] {} (1.25*\rad,\rad);
 
   % Right angle symbols
   \def\ralen{.2ex}  % length of the short segment
-  \foreach \inter/\first/\last in {start/origin/tangent} % , end/origin/nextstraight
+  \foreach \inter/\first/\last in {start/origin/tangent}
     {
       \draw let \p1 = ($(\inter)!\ralen!(\first)$), % point along first path
                 \p2 = ($(\inter)!\ralen!(\last)$),  % point along second path

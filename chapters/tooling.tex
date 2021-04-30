@@ -1,47 +1,36 @@
-This chapter discusses open source software tools built and used in the previous chapters.
+This chapter discusses open-source software tools built and used in the previous chapters.
 These tools were designed for general applications of this work and were written in the scientific computing language Julia.
-We first discuss the adaptive stress testing package built for \cref{cha:episodic_ast}, then provide quick usage examples of the packages built for \cref{cha:cem_variants} and \cref{cha:weakness_rec}. 
+Open-source software is important for safety validation as it encourages reproducibility and enables others to apply these to different applications.
+More importantly, we view the field of validation as collaborative and non-competitive because ultimately safer systems benefit us all.
+We first discuss the adaptive stress testing package built for \cref{cha:episodic_ast}, then provide quick usage examples of the optimization package built for \cref{cha:cem_variants} and the weakness recognition framework built for \cref{cha:weakness_rec}. All software packages described in this section are publicly available under the MIT license.
 
-\section{POMDPStressTesting.jl Summary}
 
-\href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems through a technique called adaptive stress testing \cite{ast}.
-Adaptive stress testing (AST) has been used to find failures in safety-critical systems such as aircraft collision avoidance systems \cite{ast_acasx}, flight management systems \cite{ast_fms}, and autonomous vehicles \cite{ast_av}.
+\section{POMDPStressTesting.jl Summary}\label{sec:pomdpstresstesting}
+\href{https://github.com/sisl/POMDPStressTesting.jl}{POMDPStressTesting.jl} is a package that uses reinforcement learning and stochastic optimization to find likely failures in black-box systems through a technique called adaptive stress testing \cite{lee2019adaptive}.
+Adaptive stress testing (AST) has been used to find failures in safety-critical systems such as aircraft collision avoidance systems \cite{lee2015adaptive}, flight management systems \cite{moss2020adaptive}, and autonomous vehicles \cite{koren2018adaptive}.
 The POMDPStressTesting.jl package is written in Julia \cite{bezanson2017julia} and is part of the wider POMDPs.jl ecosystem \cite{pomdps_jl}, which provides access to simulation tools, policies, visualizations, and---most importantly---solvers.
-We provide different solver variants including online planning algorithms such as Monte Carlo tree search \cite{mcts} and deep reinforcement learning algorithms such as trust region policy optimization (TRPO) \cite{trpo} and proximal policy optimization (PPO) \cite{ppo}.
-Stochastic optimization solvers such as the cross-entropy method \cite{cem} are also available and random search is provided as a baseline.
+We provide different solver variants including online planning algorithms such as Monte Carlo tree search \cite{coulom2006efficient} and deep reinforcement learning algorithms such as trust region policy optimization (TRPO) \cite{trpo} and proximal policy optimization (PPO) \cite{ppo}.
+Stochastic optimization solvers such as the cross-entropy method \cite{rubinstein1999cross} are also available and random search is provided as a baseline.
 Additional solvers can easily be added by adhering to the POMDPs.jl interface.
 
-\begin{lstlisting}[language=JuliaLocal]
-# GrayBox simulator and environment
-abstract type GrayBox.Simulation end
-function GrayBox.environment(sim::Simulation)::GrayBox.Environment end
-function GrayBox.transition!(sim::Simulation)::Real end
 
-# BlackBox.interface(input::InputType)::OutputType
-function BlackBox.initialize!(sim::Simulation)::Nothing end
-function BlackBox.evaluate!(sim::Simulation)::Tuple{Real, Real, Bool} end
-function BlackBox.distance(sim::Simulation)::Real end
-function BlackBox.isevent(sim::Simulation)::Bool end
-function BlackBox.isterminal(sim::Simulation)::Bool end
-\end{lstlisting}
-
-The AST formulation treats the falsification problem (i.e. finding failures) as a Markov decision process (MDP) with a reward function that uses a measure of distance to a failure event to guide the search towards failure.
+\subsection{Interface and Related Software}
+The AST formulation treats the falsification problem (i.e., finding failures) as a Markov decision process (MDP) with a reward function that uses a measure of distance to a failure event to guide the search towards failure.
 The reward function also uses the state transition probabilities to guide towards \textit{likely} failures.
 Reinforcement learning aims to maximize the discounted sum of expected rewards, therefore maximizing the sum of log-likelihoods is equivalent to maximizing the likelihood of a trajectory.
-A gray-box simulation environment steps the simulation and outputs the state transition probabilities, and the black-box system under test is evaluated in the simulator and outputs an event indication and the real-valued distance metric (i.e. how close we are to failure).
+A gray-box simulation environment steps the simulation and outputs the state transition probabilities, and the black-box system under test is evaluated in the simulator and outputs an event indication and the real-valued distance metric (i.e., how close we are to failure).
 To apply AST to a general black-box system, a user has to implement the following Julia interface:
+\input{algorithms/pomdp-stress-testing-interface}
 
-% NOTE: Interface WAS here.
 
-Our package builds off work originally done in the AdaptiveStressTesting.jl package \cite{ast}, but POMDPStressTesting.jl adheres to the interface defined by POMDPs.jl and provides different action modes and solver types.
-Related falsification tools (i.e. tools that do not include most-likely failure analysis) are \textsc{S-TaLiRo} \cite{staliro}, Breach \cite{breach}, and \textsc{FalStar} \cite{falstar}.
+Our package builds off work originally done in the AdaptiveStressTesting.jl package \cite{lee2019adaptive}, but POMDPStressTesting.jl adheres to the interface defined by POMDPs.jl and provides different action modes and solver types.
+Related falsification tools (i.e., tools that do not include most-likely failure analysis) are \textsc{S-TaLiRo} \cite{annapureddy2011staliro}, Breach \cite{breach}, and \textsc{FalStar} \cite{falstar}.
 These packages use a combination of optimization, path planning, and reinforcement learning techniques to solve the falsification problem.
-The tool most closely related to POMDPStressTesting.jl is the AST Toolbox in Python \cite{ast_av}, which wraps around the gym reinforcement learning environment \cite{gym}.
+The tool most closely related to POMDPStressTesting.jl is the AST Toolbox in Python \cite{koren2018adaptive}, which wraps around the gym reinforcement learning environment \cite{gym}.
 The author has contributed to the AST Toolbox and found the need to create a similar package in pure Julia for better performance and to interface with the POMDPs.jl ecosystem.
 
 
 \subsection{Statement of Need}
-
 Validating autonomous systems is a crucial requirement before their deployment into real-world environments.
 Searching for likely failures using automated tools enable engineers to address potential problems during development.
 Because many autonomous systems are in environments with rare failure events, it is especially important to incorporate likelihood of failure within the search to help inform the potential problem mitigation.
@@ -53,65 +42,35 @@ The interface is designed to easily extend to other autonomous system applicatio
 
 
 \subsection{Research and Industrial Usage}
-
-POMDPStressTesting.jl has been used to find likely failures in aircraft trajectory prediction systems \cite{ast_fms}, which are flight-critical subsystems used to aid in-flight automation.
-A developmental commercial flight management system was stress tested so the system engineers could mitigate potential issues before system deployment \cite{ast_fms}.
+POMDPStressTesting.jl has been used to find likely failures in aircraft trajectory prediction systems (\cref{cha:episodic_ast}) \cite{moss2020adaptive}, which are flight-critical subsystems used to aid in-flight automation.
+A developmental commercial flight management system was stress tested so the system engineers could mitigate potential issues before system deployment.
 In addition to traditional requirements-based testing for avionics certification \cite{do178c}, this work is being used to find potential problems during development.
-There is also ongoing research on the use of POMDPStressTesting.jl for assessing the risk of autonomous vehicles and determining failure scenarios of autonomous lunar rovers. 
+There has also been research on the use of POMDPStressTesting.jl for assessing the risk of autonomous vehicles and determining failure scenarios of autonomous lunar rovers.
 
-
-\subsection{Acknowledgments}
-
-We acknowledge Ritchie Lee for his guidance and original work on adaptive stress testing and the AdaptiveStressTesting.jl package and Mark Koren, Xiaobai Ma, and Anthony Corso for their work on the AST Toolbox Python package and the CrossEntropyMethod.jl package.
-We also acknowledge Shreyas Kowshik for his initial implementation of the TRPO and PPO algorithms in Julia.
-We want to thank the Stanford Intelligent Systems Laboratory for their development of the POMDPs.jl ecosystem and the MCTS.jl package; particular thanks to Zachary Sunberg.
-% We also want to thank Mykel J. Kochenderfer for his support and research input and for advancing the Julia community.
 
 
 \section{CrossEntropyVariants.jl Summary}
+The CrossEntropyVariants.jl\footnote{\url{https://github.com/mossr/CrossEntropyVariants.jl}} package provides a general implementation of the algorithms introduced in \cref{cha:cem_variants}.
+Specifically, we provide the following algorithms that take an objective function $S$ and initial proposal distribution $\M$ as input, and output an optimized distribution $\M'$:
 
-This section summarizes the package produced from the work in \cref{cha:cem_variants}. To illustrate why we found Julia to be our language of choice, below we present a slightly cleaned-up version of our actual implementation of \cref{alg:ce_surrogate} (i.e., the \texttt{ce\_surrogate} algorithm), noting the direct translation of the pseudocode into executable Julia code:
+\input{algorithms/cem-variants-functions}
 
-\begin{lstlisting}[language=JuliaLocal]
-function ce_surrogate(S, 𝐌, m, m_elite, k_max)
-    for k in 1:k_max
-        mₑ, m_elite = evaluation_schedule(k, k_max)
-        𝐗 = rand(𝐌, mₑ)
-        𝐘 = map(S, eachcol(𝐗))
-        𝐞 = 𝐗[:, sortperm(𝐘)[1:m_elite]]
-        𝐄 = model_elite_set!(𝐗, 𝐘, 𝐌, 𝐞, m, m_elite)
-        𝐌 = fit(𝐌, 𝐄)
-    end
-    return 𝐌
-end
-\end{lstlisting}
+To illustrate why we found Julia to be our language of choice, below we present a slightly cleaned-up version of our actual implementation of \cref{alg:ce_surrogate} (i.e., the \textsc{CE-Surrogate} algorithm), noting the direct translation of the pseudocode into executable Julia code:
 
-To run an example optimization problem, consider the following code:
+\input{algorithms/ce-surrogate}
 
-\begin{lstlisting}[language=JuliaLocal]
-using CrossEntropyVariants
-using Distributions
+As an example, to run an simple optimization problem, consider the following code:
+\input{algorithms/cem-variants-usage}
 
-S = sierra # objective function
-𝛍 = [0, 0]
-𝚺 = [200 0; 0 200]
-𝐌 = MvNormal(𝛍, 𝚺) # proposal distribution
+The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
+\input{algorithms/cem-variants-usage-basis}
 
-(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌)
-\end{lstlisting}
-
-The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function \cite{kochenderfer2019algorithms}. To use radial basis functions instead of a Gaussian process, you can specify a basis keyword input:
-
-\begin{lstlisting}[language=JuliaLocal]
-S = paraboloid # objective function
-𝐌 = MvNormal([0, 0], [200 0; 0 200]) # proposal distribution
-
-(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌; basis=:squared)
-\end{lstlisting}
+Our package relies an other open-source Julia software including Distributions.jl \cite{distributions.jl}, GaussianMixtures.jl,\footnote{\url{https://github.com/davidavdav/GaussianMixtures.jl}} GaussianProcesses.jl \cite{gaussianprocesses.jl}, and Optim.jl \cite{mogensen2018optim}. Their own open-source contributions enabled the quick prototyping of our package and we thank their commitment and effort. We were inspired by \citefull{kochenderfer2019algorithms} and borrowed the \texttt{cross\_entropy\_method} algorithm from their work.
 
 
 \section{FailureRepresentation.jl Summary}
+The FailureRepresentation.jl\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}} package captures the work from \cref{cha:weakness_rec} primarily for reproducibility but can also be extended to other black-box systems aside from the MNIST neural network classifier.
+This primarily requires the user to define a \texttt{predict(ℳ, x)} function given their system $\mathcal M$ and input $x$, replacing the \texttt{SystemUnderTest} module within the framework.
+We also provide experiment code and pre-trained adversarial models produced from \cref{cha:weakness_rec}.
 
-\begin{lstlisting}[language=Julia]
-X, Y, mapping, adversary, metrics, metrics_rand = sampled_validation_iteration(T=10)
-\end{lstlisting}
+A sample usage would load the user-defined system under test and the adversarial autoencoder, then call the \texttt{sampled\_validation\_iteration} function illustrated in \cref{fig:framework}.

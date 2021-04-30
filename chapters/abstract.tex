@@ -1,32 +1,30 @@
-Before safety-critical autonomous systems are deployed into the real-world, we first must validate how safe they are by stress testing the systems in simulation.
-This work proposes several techniques to aid in efficient stress testing of black-box systems, especially when those systems are computationally expensive to evaluate.
+Before safety-critical autonomous systems are deployed into the real-world, we first must validate their safety.
+One common approach is to stress test the systems in simulation.
+This thesis proposes several techniques to aid in efficient stress testing of black-box systems, especially when those systems are computationally expensive to evaluate.
 We first introduce novel variants of the cross-entropy method for stochastic optimization used to find rare failure events.
 The original cross-entropy method relies on enough objective function calls to accurately estimate the optimal parameters of the underlying distribution and may get stuck in local minima.
-% Certain objective functions may be computationally expensive to evaluate, and the cross-entropy method could potentially get stuck in local minima.
 The variants we introduce attempt to address these concerns and the primary idea is to use every sample to build a surrogate model to offload computation from an expensive system under test.
-% To mitigate expensive function calls, during optimization we use every sample to build a surrogate model to approximate the objective function.
-% The surrogate model augments the belief of the objective function with less expensive evaluations.
-%%% We use a Gaussian process for our surrogate model to incorporate uncertainty in the predictions which is especially helpful when dealing with sparse dfata.
-%%% To address local minima convergence, we use Gaussian mixture models to encourage exploration of the design space.
 To test our approach, we created a parameterized test objective function with many local minima and a single global minimum, where the test function can be adjusted to control the spread and distinction of the minima.
-Experiments were run to stress the cross-entropy method variants and results indicate that the surrogate model-based approach reduces local minima convergence using the same number of function evaluations.
+% Experiments were run to stress the cross-entropy method variants and results indicate that the surrogate model-based approach reduces local minima convergence using the same number of function evaluations.
 
 To find failure events and their likelihoods in computationally expensive sequential decision making systems, we propose a modification to the black-box stress testing approach called \textit{adaptive stress testing}.
 This modification generalizes adaptive stress testing to be broadly applied to episodic systems, where a reward is only received at the end of an episode.
-To test this approach, we analyze an aircraft trajectory predictor from a developmental commercial flight management system which takes as input a collection of lateral waypoints and en-route environmental conditions.
+To test this approach, we analyze an aircraft trajectory predictor from a developmental commercial flight management system.
 The intention of this work is to find likely failures and report them back to the developers so they can address and potentially resolve shortcomings of the system before deployment. 
-We use a modified Monte Carlo tree search algorithm with progressive widening as our adversarial reinforcement learner and compared performance to direct Monte Carlo simulations and to the cross-entropy method as an alternative importance sampling baseline.
+We use a modified Monte Carlo tree search algorithm with progressive widening as our adversarial reinforcement learner.
+ % and compared performance to direct Monte Carlo simulations and to the cross-entropy method as an alternative importance sampling baseline.
 The goal is to find potential problems otherwise not found by traditional requirements-based avionics testing.
-Results indicate that our adaptive stress testing approach finds more failures with higher likelihoods relative to the baselines.
+% Results indicate that our adaptive stress testing approach finds more failures with higher likelihoods relative to the baselines.
 
 When validating a system that relies on a static validation dataset, one could exhaustively evalute the entire dataset, yet that process may be computationally intractable especially when testing minor modification to the system under test.
-To address this, we reformulate the problem to attempt to intelligently select candidate validation data points that we predict to likely cause a failure, using knowledge of the system failures experienced so far.
+To address this, we reformulate the problem to intelligently select candidate validation data points that we predict to likely cause a failure, using knowledge of the system failures experienced so far.
 We propose an adaptive black-box validation framework that will learn system weaknesses over time and exploit this knowledge to propose validation samples that will likely result in a failure.
-We use a low-dimensional encoded representation of inputs to train an adversarial failure classifier to intelligently select candidate failures to evaluate.
-Experiments were run to test our approach against a random candidate selection process and we also compare against full knowledge of the true system failures.
-We stress test a black-box neural network classifier trained on the MNIST dataset,
-and results show that using our framework, the adversarial failure classifier selects failures about $3$ times more often than random.
+To further reduce computational load, we use a low-dimensional encoded representation of inputs to train the adversarial failure classifier, which selects candidate failures to evaluate.
+% Experiments were run to test our approach against a random candidate selection process and we also compare against full knowledge of the true system failures.
+% We stress test a black-box neural network classifier trained on the MNIST dataset,
+% and results show that using our framework, the adversarial failure classifier selects failures about $3$ times more often than random.
 
-A motivating principle of this work is a committement to open source software.
-The core software for each of the introduced techniques have been developed as Julia packages and publically released.
-We introduce the software at a high level and discuss alternative applications from both a research and industrial perspective.
+A motivating principle of this work is a committement to open-source software.
+We believe everyone benefits when we treat ideas for black-box validation as collaborative and non-competitive; thus resulting in a net safety increase for all.
+The core software for each of the introduced techniques have been developed as Julia packages and publically released under the MIT license.
+We introduce the software and their usages at a high level and discuss alternative applications from both a research and industrial perspective.

@@ -2,8 +2,8 @@
   [
     scale=16, every node/.style={scale=2},
     >=stealth,
-    point/.style = {draw, circle,  fill = black, inner sep = 1pt},
-    dot/.style   = {draw, circle,  fill = black, inner sep = .2pt},
+    point/.style = {draw, circle, fill = black, inner sep = 1pt},
+    dot/.style   = {draw, circle, fill = black, inner sep = .2pt},
     latlon/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=4mm, fill=white, fill opacity=0.75, fill = black, inner sep = 0.1pt},
     latlonstart/.style = {draw, rectangle, minimum width=0.0001mm, minimum height=4mm, fill = black, inner sep = 0.3pt},
     wpt/.style  = {diamond, fill=white, fill opacity=0.75},
@@ -33,9 +33,7 @@
 
   \draw (start) arc (90:\ang:\rad);
 
-
   \draw[-] (initial) -- node (ls) [label = {above:$\ell_1$}] {} (start);
-
 
   \draw[dashed]
     ($ (origin) ! 1 ! (start) $)

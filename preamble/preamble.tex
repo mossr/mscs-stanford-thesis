@@ -6,7 +6,6 @@
 \usepackage{amsfonts}
 \usepackage{siunitx}
 \usepackage{commath}
-
 \usepackage{preamble/vector} % local vector.sty for bold Greek math letters
 
 
@@ -14,12 +13,46 @@
 \input{julia_font}
 \input{julia_listings}
 
-\lstdefinelanguage{JuliaLocal}[]{Julia}{ % inherit Julia lang. to add keywords
-    morekeywords=[3]{initialize!, transition!, evaluate!, distance, isevent, isterminal, environment, evaluation_schedule, eachcol, model_elite_set!, fit, ce_surrogate, sierra, paraboloid},
-    morekeywords=[2]{Nothing, Tuple, Real, Bool, Simulation, BlackBox, GrayBox, Sampleable, Environment, MvNormal},
-    morekeywords=[1]{function, abstract, type, end},
-    morekeywords=[2]{CrossEntropyVariants, Distributions}, % define more types and modules
+% Inherit Julia lang. to add keywords
+\lstdefinelanguage{JuliaLocal}[]{Julia}{
+    % Define more custon types, functions, and modules.
+    morekeywords=[3]{
+      initialize!,
+      transition!,
+      evaluate!,
+      distance,
+      isevent,
+      isterminal,
+      environment,
+      evaluation_schedule,
+      model_elite_set!,
+      fit,
+      cross_entropy_method,
+      ce_surrogate,
+      ce_mixture,
+      sierra,
+      paraboloid,
+      sampled_validation_iteration,
+    },
+    morekeywords=[2]{
+      Simulation,
+      BlackBox,
+      GrayBox,
+      Sampleable,
+      Environment,
+      MvNormal,
+    },
+    morekeywords=[2]{
+      CrossEntropyVariants,
+      Distributions,
+    },
 }
+
+
+%% Unicode in \texttt{}
+\usepackage{newunicodechar}
+\newfontface{\calligraphic}{Latin Modern Math}[Scale=0.85]
+\newunicodechar{ℳ}{{\normalfont\calligraphic ℳ}}
 
 
 %%% Mathematical operators (from mathematics.tex)
@@ -40,10 +73,8 @@
 \DeclareMathOperator{\GammaDist}{Gamma}
 \DeclareMathOperator{\Gumbel}{Gumbel}
 \DeclareMathOperator{\Std}{Std}
-% \DeclareMathOperator{\Dirichlet}{Dir}
 \DeclareMathOperator{\Train}{\mathcal{D}_{\text{train}}}
 \DeclareMathOperator{\Dtrain}{\mathcal{D}_{\text{train}}}
-% \newcommand{\Dtrain}{\mathcal{D}_\text{train}}
 \DeclareMathOperator{\TrainLoss}{TrainLoss}
 \DeclareMathOperator{\Loss}{Loss}
 \DeclareMathOperator{\ZeroOneLoss}{Loss_{0\text{-}1}}
@@ -57,7 +88,6 @@
 \DeclareMathOperator{\Miss}{Miss}
 \DeclareMathOperator{\sgn}{sgn}
 \newcommand{\1}{\mathbb{1}}
-% \newcommand{\R}{\mathbb{R}}
 \renewcommand{\v}{\mathbf{v}}
 \newcommand{\V}{\mathbf{V}}
 \newcommand{\w}{\mathbf{w}}
@@ -67,7 +97,7 @@
 \newcommand{\B}{\mathbf{B}}
 \newcommand{\e}{\mathbf{e}}
 \newcommand{\bfE}{\mathbf{E}}
-\newcommand{\surrogate}{\hat{S}} % Surrogate model (\mathcal{S})
+\newcommand{\surrogate}{\hat{S}} % Surrogate model
 \newcommand{\Sierra}{\mathbf{M}_\mathcal{S}}
 
 \newcommand{\opt}{*}
@@ -85,8 +115,6 @@
 \DeclarePairedDelimiter{\paren}{\lparen}{\rparen}
 \DeclarePairedDelimiter{\brock}{\lbrack}{\rbrack}
 \DeclarePairedDelimiter{\curly}{\{}{\}}
-% \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
-% \DeclarePairedDelimiter{\abs}{\lvert}{\rvert}
 \DeclarePairedDelimiter{\anglebrackets}{\langle}{\rangle}
 \DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
 \DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
@@ -133,7 +161,6 @@
 \DeclareMathOperator{\softmax}{softmax}
 
 
-
 %%% Algorithm settings
 \algtext*{EndLoop}% Remove "end _X_" text
 \algtext*{EndFor}
@@ -152,23 +179,13 @@
 \usepackage{amsfonts}
 \usepackage{siunitx}
 \usepackage{commath}
-% \usepackage[backend=biber,style=ieee,natbib=true]{biblatex} % TODO.
-\usepackage[backend=biber,natbib=true]{biblatex} % TODO.
-% \renewcommand{\bibfont}{\footnotesize} % for IEEE bibfont size TODO.
+\usepackage[backend=biber,natbib=true]{biblatex}
 \usepackage{multirow}
 \usepackage{bbm}
 \usepackage[hidelinks]{hyperref}
 \usepackage{cleveref}
-% \usepackage[keeplastbox]{flushend} % TODO.
-
-
 \usepackage{longtable,tabularx,booktabs}
 \usepackage[flushleft]{threeparttable}
-
-% Separation after algorithm environment
-% \setlength{\textfloatsep}{\baselineskip} % TODO.
-
-% \addbibresource{cem_variants.bib} % TODO
 
 % Flipped vector arrow
 \makeatletter
@@ -200,7 +217,7 @@
 \usetikzlibrary{decorations.pathmorphing}
 \usetikzlibrary{decorations.pathreplacing}
 
-\usepackage[caption=false]{subfig} % TODO?
+\usepackage[caption=false]{subfig}
 
 \usepackage{pgfplots}
 \pgfplotsset{compat=newest}
@@ -218,35 +235,14 @@ cells={anchor=west}}
 
 
 %%%%%% Episodic AST
-% \usepackage[utf8]{inputenc}
 \usepackage{fancyhdr,graphicx}
 \usepackage[margin=1in]{geometry}
 \usepackage[nolist]{acronym}
 \usepackage{booktabs}
-% \usepackage[table]{xcolor}
-% \usepackage{amsmath}
-% \usepackage{pgfplots}
-% \usepackage{silence}
-% \usepackage{tikz}
-% \usepackage{algorithmicx}
-% \usepackage{algorithm}
-% \usepackage{algpseudocode}
-% \usepackage{bm}
-% \usepackage{amsfonts}
-% \usepackage{siunitx}
-% \usepackage{commath}
-% \usepackage[hidelinks,bookmarks=false]{hyperref}
-% \usepackage{cleveref}
-% \usepackage{multirow}
-% \usepackage{wrapfig}
-% \usepackage{subfig}
-% \usepackage[font=small]{caption}
-
 \usepackage{longtable,tabularx,booktabs}
 \usepackage[flushleft]{threeparttable}
 \usepackage[keeplastbox]{flushend}
 
-% \addbibresource{references.bib}
 
 % Algorithm style.
 \algtext*{EndLoop} % Remove "end _X_" text
@@ -254,6 +250,7 @@ cells={anchor=west}}
 \algtext*{EndFunction}
 \renewcommand\algorithmicthen{}
 \renewcommand\algorithmicdo{}
+
 
 % PGFPlots and TikZ settings
 \pgfplotsset{compat=newest}
@@ -276,75 +273,28 @@ cells={anchor=west}}
 \definecolor{pastelGreen}{HTML}{3EAA0D}
 \definecolor{pastelOrange}{HTML}{C38D09}
 \definecolor{pastelRed}{HTML}{F5615C}
-% \input{preamble/pastelcolormap} % TODO
-% \input{preamble/pastelcolorlist} % TODO
+
 
 % Custom commands
 \newcommand{\todo}[1]{\textbf{[[TODO: #1]]}}
 \crefrangelabelformat{section}{#3#1#4--#5\crefstripprefix{#1}{#2}#6} % Reference range of sections with a dash
-% \newcommand{\citefull}[1]{\citeauthor{#1}~\cite{#1}}
-
-%%% full author citation
-% {\newrobustcmd*{\citefirstlastauthor}{\AtNextCite{\DeclareNameAlias{labelname}{given-family}}\citeauthor}
-
+\newcommand{\citefull}[1]{\citeauthor{#1}~\cite{#1}}
 
 
 
 %% Weakness recognition
-\usepackage{graphbox}       % for [align=c] in \includegraphics
+\usepackage{graphbox} % for [align=c] in \includegraphics
 \usepackage{wrapfig}
-% \usepackage{subfigure}
 \usepackage{caption}
-% \usepackage{subcaption}
 \usepackage{graphicx}
-
-
-
-
 
 
 %%% POMDPStressTesting.jl
 \usepackage{listings}
 
-% \lstdefinelanguage{Julia}{
-%     keywords=[3]{initialize!, transition!, evaluate!, distance, isevent, isterminal, environment},
-%     keywords=[2]{Nothing, Tuple, Real, Bool, Simulation, BlackBox, GrayBox, Sampleable, Environment},
-%     keywords=[1]{function, abstract, type, end},
-%     sensitive=true,
-%     morecomment=[l]{\#},
-%     morecomment=[n]{\#=}{=\#},
-%     morestring=[s]{"}{"},
-%     morestring=[m]{'}{'},
-%     alsoletter=!?,
-%     literate={,}{{\color[HTML]{0F6FA3},}}1
-%              {\{}{{\color[HTML]{0F6FA3}\{}}1
-%              {\}}{{\color[HTML]{0F6FA3}\}}}1
-% }
-
-% \lstset{
-%     language         = Julia,
-%     backgroundcolor  = \color[HTML]{F2F2F2},
-%     basicstyle       = \small\ttfamily\color[HTML]{19177C},
-%     numberstyle      = \ttfamily\scriptsize\color[HTML]{7F7F7F},
-%     keywordstyle     = [1]{\bfseries\color[HTML]{1BA1EA}},
-%     keywordstyle     = [2]{\color[HTML]{0F6FA3}},
-%     keywordstyle     = [3]{\color[HTML]{0000FF}},
-%     stringstyle      = \color[HTML]{F5615C},
-%     commentstyle     = \color[HTML]{AAAAAA},
-%     rulecolor        = \color[HTML]{000000},
-%     frame=lines,
-%     xleftmargin=10pt,
-%     framexleftmargin=10pt,
-%     framextopmargin=4pt,
-%     framexbottommargin=4pt,
-%     tabsize=4,
-%     captionpos=b,
-%     breaklines=true,
-%     breakatwhitespace=false,
-%     showstringspaces=false,
-%     showspaces=false,
-%     showtabs=false,
-%     columns=fullflexible,
-%     keepspaces=true,
-%     numbers=none,
-% }
+%% Control appedix spacing
+\usepackage{titlesec}
+\usepackage{appendix, apptools}
+\AtAppendix{%
+\titleformat{\chapter}[display]{\vspace*{-50pt}\bfseries\huge}{Appendix~\thechapter}{1em}{}
+\titlespacing*{\chapter}{0pt}{60pt}{20pt}}%

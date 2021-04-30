@@ -1,0 +1,11 @@
+\begin{lstlisting}[language=JuliaLocal]
+using CrossEntropyVariants
+using Distributions
+
+S = sierra # objective function
+𝛍 = [0, 0] # initial mean
+𝚺 = [200 0; 0 200] # initial covariance
+𝐌 = MvNormal(𝛍, 𝚺) # proposal distribution
+
+(𝐌, bestₓ, bestᵥ) = ce_surrogate(S, 𝐌)
+\end{lstlisting}

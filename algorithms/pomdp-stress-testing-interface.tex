@@ -1,0 +1,13 @@
+\begin{lstlisting}[language=JuliaLocal]
+# GrayBox simulator and environment
+abstract type GrayBox.Simulation end
+function GrayBox.environment(sim::Simulation)::GrayBox.Environment end
+function GrayBox.transition!(sim::Simulation)::Real end
+
+# BlackBox.interface(input::InputType)::OutputType
+function BlackBox.initialize!(sim::Simulation)::Nothing end
+function BlackBox.evaluate!(sim::Simulation)::Tuple{Real, Real, Bool} end
+function BlackBox.distance(sim::Simulation)::Real end
+function BlackBox.isevent(sim::Simulation)::Bool end
+function BlackBox.isterminal(sim::Simulation)::Bool end
+\end{lstlisting}

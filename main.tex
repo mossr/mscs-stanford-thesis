@@ -1,29 +1,15 @@
-% Stanford University PhD thesis style -- modifications to the report style
-% This is unofficial so you should always double check against the
-% Registrar's office rules
-% See http://library.stanford.edu/research/bibliography-management/latex-and-bibtex
-% 
-% Example of use below
-% See the suthesis-ms-2e.sty file for documentation
-%
-\documentclass{report}
+% Robert Moss
+% Master of Science in Computer Science with a Distinction in Research (Artificial Intelligence Track)
+% Stanford University, Stanford, CA 94305
+% mossr@cs.stanford.edu
+% May, 2021
+\documentclass[11pt]{report}
 \usepackage{suthesis-ms-2e}
 \dept{Computer Science}
 
 \input{preamble/preamble}
-
-% \usetikzlibrary{external}
-% \tikzexternalize[prefix=figures/weakness_rec]
-
-% TODO: Combine into one `references.bib`
-\addbibresource{references/cem_variants.bib}
-\addbibresource{references/episodic_ast.bib}
-\addbibresource{references/weakness_rec.bib}
-\addbibresource{references/pomdpstresstesting.bib}
-
-% DRAFTING: speed up compilation.
-\def\includebody{} % sets to true
-% \let\includebody\undefined % sets to false
+\addbibresource{references/references.bib}
+% TODO. More authors not et al.?
 
 \begin{document}
 \title{Algorithms for efficient validation of black-box systems}
@@ -35,7 +21,7 @@
 \beforepreface
 \prefacesection{Abstract}
 \input{chapters/abstract}
-% 
+%
 \prefacesection{Acknowledgments}
 \input{chapters/acknowledgments}
 \afterpreface
@@ -45,67 +31,27 @@
 \renewcommand{\sectionmark}[1]{ \markright{\textsc{#1}}{} }
 
 
-
-\chapter{Introduction}
+\chapter{Introduction}\label{cha:introduction}
 \input{chapters/introduction}
 
-\ifdefined\includebody
-    % Cross-Entropy Method Variants for Optimization
-    \chapter{Cross-Entropy Surrogate Method}\label{cha:cem_variants}
-    \input{chapters/cem_variants}
+\chapter{Cross-Entropy Surrogate Method}\label{cha:cem_variants}
+\input{chapters/cem_variants}
 
-    \chapter{Episodic Adaptive Stress Testing}\label{cha:episodic_ast}
-    \input{chapters/episodic_ast}
+\chapter{Episodic Adaptive Stress Testing}\label{cha:episodic_ast}
+\input{chapters/episodic_ast}
 
-    \chapter{Adversarial Weakness Recognition}\label{cha:weakness_rec}
-    \input{chapters/weakness_rec}
+\chapter{Adversarial Weakness Recognition}\label{cha:weakness_rec}
+\input{chapters/weakness_rec}
 
-    % POMDPStressTesting.jl: Adaptive Stress Testing for Black-Box Systems
-    \chapter{Open Source Tools for Validation}\label{cha:tooling}
-    \input{chapters/tooling}
-\fi
+\chapter{Open Source Tools for Validation}\label{cha:tooling}
+\input{chapters/tooling}
 
-\chapter{Conclusions}
-...
+\chapter{Conclusions}\label{cha:conclusions}
+\input{chapters/conclusions}
 
 \appendix
-\ifdefined\includebody
-    \input{appendices/episodic_ast_appendix}
-\fi
+\input{appendices/episodic_ast_appendix}
 
-% \bibliographystyle{plain}
-% \bibliography{cem_variants}
 \printbibliography
 
-
 \end{document}
-
-% TODO:
-% [-] combine references.bib
-% [x] See Dorsa notes
-% [ ] See Mykel notes
-% [ ] Subsections for tooling: CrossEntropyVariants.jl and FailureRepresentation.jl
-% [x] Combine Acknowledgments
-% [ ] Flow together chapters
-% [x] "dissertation" wording in the signatures page
-% [x] Remove "graduate studies" committee?
-
-
-% Mykel notes:
-% [x] Concatenate research papers from MS (if they're related work / extensions)
-% [ ] Add introduction
-% [ ] Flow together body chapters
-% [ ] Remove redundancies between them
-% [x] Change conclusions/future work into discussion
-% - Two big things:
-%     [ ] 1) intro chapter
-%         - shortest intro chapter possible (concise)
-%         - "freshman undergrad could understand contributions"
-%     [ ] 2) final chapter
-%         [ ] one section "Summary" high level, no jargon, no non-sense
-%         [ ] second section "Contributions", summarize how you've supported your claims (back references, specialized terminology)
-%         [ ] third: future work
-% https://www2.eecs.berkeley.edu/Pubs/Theses/
-% [x] Fix \texttt to use old monofont
-% [x] Move JuliaMono font files.
-% [ ] Page header to be small caps?

@@ -1,6 +1,7 @@
-% \vspace{-2.5mm}
 \begin{algorithm}[!ht]
-  \caption{Monte Carlo tree search simulation.} 
+  \captionsetup{font=small}
+  \small
+  \caption{Monte Carlo tree search simulation.}
   \label{alg:mcts-pw-simulate}
   \begin{algorithmic}
   \Function{Simulate$(s, d)$}{}
@@ -23,8 +24,9 @@
   \end{algorithmic}
 \end{algorithm}
 %
-% \vspace{-2.5mm}
 \begin{algorithm}[!ht]
+  \captionsetup{font=small}
+  \small
   \caption{Modified rollout with end-of-depth evaluation.}
   \label{alg:mcts-pw-rollout}
   \begin{algorithmic}
@@ -32,14 +34,11 @@
   \If {$d = 0$}
     \State $(p, e, d) \leftarrow \textproc{Evaluate}(s)$
     \State $\tau \leftarrow \textproc{IsTerminal}(s)$
-    % \State $(\bar{a},s^\prime) \leftarrow \textproc{Evaluate}(s)$
     \State $\bar{a}^* \leftarrow \textproc{UpdateBestAction}(s,Q)$
     \State \Return $R(p,e,d,\tau)$
-    % \State \Return $R(s,\bar{a},s^\prime)$
   \ElsIf {$d = \floor{d_\text{max}/2}$}
     \State $\bar{a} \leftarrow \bar{a}^*$ \algorithmiccomment{feed best action}
   \Else
-    % \State $\bar{a} \sim \mathbb{U}$ \algorithmiccomment{sample seed uniformly}
       \State $\bar{a} \leftarrow \textproc{SampleAction}(s,Q)$
   \EndIf
   \State $(s^\prime, r) \sim G(s,\bar{a})$
@@ -49,13 +48,14 @@
 \end{algorithm}
 %
 \begin{algorithm}[!ht]
+  \captionsetup{font=small}
+  \small
   \caption{Action selection with progressive widening.}
   \label{alg:mcts-pw-action-widen}
   \begin{algorithmic}
   \Function{SelectAction$(s)$}{}
   \If {$| A(s) | \le kN(s)^\alpha$}
     \State $\bar{a} \leftarrow \textproc{SampleAction}(s,Q)$
-    % \State $\bar{a} \sim \mathbb{U}$ \algorithmiccomment{sample seed uniformly}
     \State $(N(s,\bar{a}), Q(s,\bar{a})) \leftarrow (N_0(s,\bar{a}), Q_0(s,\bar{a}))$
     \State $A(s) \leftarrow A(s) \cup \{\bar{a}\}$
   \EndIf
@@ -65,22 +65,18 @@
 \end{algorithm}
 %
 \begin{algorithm}[!ht]
-  \caption{Single deterministic next state.} 
+  \captionsetup{font=small}
+  \small
+  \caption{Single deterministic next state.}
   \label{alg:mcts-pw-deterministic-state}
   \begin{algorithmic}
   \Function{DeterministicStep$(s,\bar{a})$}{}
   \If {$N(s,\bar{a},\cdot) = \emptyset$}
     \State $(s^\prime, r) \sim G(s,\bar{a})$
-    % \State $R(s,\bar{a},s^\prime) \leftarrow r$
     \State $\textproc{SetCache}(s, \bar{a}, s^\prime, r)$
     \State $N(s,\bar{a},s^\prime) \leftarrow N_0(s,\bar{a},s^\prime)$
   \Else
-    % \State $s^\prime \leftarrow \arg_{s^\prime} N(s,\bar{a},\cdot)$
-    % \State $(s^\prime, r) \leftarrow (\textproc{CachedNextState}(s,\bar{a}), R(s,\bar{a},s^\prime))$
-    % \State $(s^\prime, r) \leftarrow \textproc{CachedNextState}(s,\bar{a})$
     \State $(s^\prime, r) \leftarrow \textproc{GetCache}(s,\bar{a})$
-    % \State $s^\prime \leftarrow (\cdot)$
-    % \State $r \leftarrow R(s,\bar{a},s^\prime)$
     \State $N(s,\bar{a},s^\prime) \leftarrow N(s,\bar{a},s^\prime)+1$
   \EndIf
   \State \Return $(s^\prime,r)$

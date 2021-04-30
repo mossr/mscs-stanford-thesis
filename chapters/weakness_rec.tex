@@ -1,16 +1,15 @@
-% \section{Introduction}
 Finding failures in a validation dataset may be computationally expensive if we search over the entire dataset.
 Then the challenge becomes how to intelligently select candidate inputs that are likely to lead to failures.
-We are also interested in finding failures in black-box systems, i.e. systems where we can only pass inputs and observe outputs---without any knowledge of the inner-workings of the system.
+We are also interested in finding failures in black-box systems, i.e., systems where we can only pass inputs and observe outputs---without any knowledge of the inner-workings of the system.
 The motivation to find such candidate failure inputs is to reduce the need to exhaustively evaluate an entire validation dataset, especially for black-box systems that may be computationally expensive to call.
 Each input sample in the dataset may also be high-dimensional, therefore we also want to learn a low-dimensional representation of the dataset and use that representation to learn features that caused failures.
 An adversarial failure classifier will input the low-dimensional representation and determine if a sampled input will likely result in a failure.
 Our proposed framework combines the components of a dataset encoder, an adversarial failure classifier, and a candidate failure selector to propose dataset inputs that will likely result in failure, all to reduce the computational cost of evaluating the system under test and to focus only on evaluating predicted failures.
-The framework is available online.\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}}
+The framework is open sourced and available under the MIT license.\footnote{\url{https://github.com/sisl/FailureRepresentation.jl}}
 
-\subsection{Related Work}
+\section{Related Work}
 Current approaches to validate black-box systems focus their search over input disturbances to find failures \citep{corso2020survey}.
-A black-box reinforcement learning approach known as adaptive stress testing (AST) has recently been used to find the most likely failures in aircraft collision avoidance systems \citep{lee2015adaptive, lee2020adaptive}, aircraft flight management systems \citep{moss2020adaptive}, and autonomous vehicles \citep{koren2018adaptive, koren2019efficient}.
+A black-box reinforcement learning approach known as adaptive stress testing (described in \cref{cha:episodic_ast}) has been used to find the most likely failures in aircraft collision avoidance systems \citep{lee2015adaptive, lee2020adaptive}, aircraft flight management systems \citep{moss2020adaptive}, and autonomous vehicles \citep{koren2018adaptive, koren2019efficient}.
 An underlying assumption of the AST problem formulation is that the system under test can be modeled as a sequential decision making process with explicitly defined states.
 This assumption limits the application of AST for validation over a dataset and ultimately creates \textit{more} data to validate due to applying input disturbances.
 Other approaches use model-based clustering to efficiently sample large datasets, but rely on tuned initialization parameters for good performance \citep{wehrens2004model}.
@@ -22,7 +21,7 @@ The most straightforward approach is to evaluate the system exhaustively over th
 
 
 \section{Dataset and Features}
-We are using the MNIST handwritten digit dataset \citep{lecun2010mnist} as our collection of inputs we want to selectively sample.
+We are using the MNIST handwritten digit dataset \citep{deng2012mnist} as our collection of inputs we want to selectively sample.
 We chose MNIST because it is a well-known machine learning dataset with many benchmarks, and is small enough to quickly iterate our framework without worrying about computational concerns.
 The MNIST training data contains $60{,}000$ gray-scale images of handwritten digits, each represented as $28\times28$ pixels. The test dataset contains $10{,}000$ gray-scale images with the same $28\times28$ pixel dimensions. For feature extraction, we left that up to the autoencoder described in \Cref{sec:autoencoder}.
 
@@ -33,11 +32,11 @@ The MNIST training data contains $60{,}000$ gray-scale images of handwritten dig
   \vspace{-30pt}
   \centering
   \centerline{\includegraphics[width=0.15\textwidth]{figures/weakness_rec/MNIST-failure-7(1).png}}
-  \caption{Example failure (i.e. misclassification) which classified this image as a $1$ instead of a $7$.}
+  \caption{Example failure (i.e., misclassification) which classified this image as a $1$ instead of a $7$.}
   \label{fig:mnist_nn_failure}
 \end{wrapfigure}
 To test our framework, we trained an MNIST classifier to be our black-box system under test $\mathcal{S}$.
-We are using the Julia machine learning package \texttt{Flux.jl} \citep{Flux.jl-2018} for building the neural network model and training.
+We are using the Julia machine learning package \texttt{Flux.jl} \citep{innes:2018} for building the neural network model and training.
 The black-box classifier $\mathcal{S}$ consists of two dense layers and a $\ReLU$ activation, mapping the input size of $28\times28=784$ to $32$ activations, and then an output layer of size $10$ (for each digit class).
 We use the logit cross-entropy loss, which is equivalent to the cross-entropy loss after applying the $\softmax$ function to the predicted output $\mathbf{\hat y}$:
 \begin{equation*}
@@ -55,13 +54,11 @@ We then split the $m$ low-dimensional samples into a training set $\tilde{\mathc
 The training set $\tilde{\mathcal{D}}_\text{train}$ is passed to an adversarial agent that learns characteristics of the low-dimensional feature representation that led to failures.
 We use a failure classifier as our adversary, and then predict which inputs led to failures over the test data $\tilde{\mathcal{D}}_\text{test}$, then map the predicted failures from the low-dimensional space back to the original representation, and then run the candidate inputs expected to result in a failure through the system under test. \Cref{fig:framework} illustrates each step of the validation framework.
 
-% \newpage % TODO: remove
 
 \begin{figure}[t]
 \centering
 \resizebox{0.9\textwidth}{!}{%
     \includegraphics[page=1]{figures/weakness_rec/validation_diagram.pdf}
-    % \input{figures/weakness_rec/validation_diagram.tex} % TOO INTENSE.
 }
 \caption{Validation framework---a dataset autoencoder $\mathcal{E}$ is trained on the entire validation dataset $\mathcal{D}_\text{test}$ consisting of input samples $\mathbf{x}$. Then $m$ samples of encoded low-dimensional representations of the inputs $\tilde{\mathbf{x}}$ are selected for this iteration $t$, denoted $\tilde{\mathbf{x}}_t^{(1:m)}$ for all $m$ samples. The low-dimensional representations are then split into a training and test dataset. The training dataset $\tilde{\mathcal{D}}_\text{train}$ is used to train an adversarial failure classifier $\mathcal{A}$ on the encoded representations. Then the test dataset $\tilde{\mathcal{D}}_\text{test}$ is used to select candidate failures $\tilde{\mathbf{x}}_c$ as predicted by the adversary. Finally, the candidate failures from the adversary $\tilde{\mathbf{x}}_c$ are mapped back to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$ and evaluated by the system under test $\mathcal{S}$.}
 \label{fig:framework}
@@ -85,15 +82,14 @@ Training is unsupervised and we use the mean squared error loss function:
 \begin{figure*}[!t]
   \centering
     \subfloat[Dataset autoencoder architecture, with inputs $\mathbf{x} \in \mathbb{R}^{28\times28}$, encoded through a dense $\LeakyReLU$ layer of size $\frac{28\times28}{2}$ to a low-dimensional representation $\tilde{\mathbf{x}} \in \mathbb{R}^{64}$, then decoded through a $\LeakyReLU$ layer of size $\frac{28\times28}{2}$, outputting $\mathbf{x}' \in \mathbb{R}^{28\times28}$.]{%
-      \resizebox{0.45\textwidth}{!}{
+      \resizebox{0.47\textwidth}{!}{
         \includegraphics[page=1]{figures/weakness_rec/autoencoder-nn.pdf}
-        % \input{figures/weakness_rec/autoencoder-nn.tex} % Needs lualatex
       }
       \label{fig:autoencoder_nn}
     }
-    \hspace{5mm}
+    \hspace{2mm}
     \subfloat[Sampled output from the MNIST autoencoder: true input is on top and the recovered input on bottom.]{%
-      \resizebox{0.45\textwidth}{!}{
+      \resizebox{0.47\textwidth}{!}{
         \centerline{\includegraphics[width=0.6\textwidth]{figures/weakness_rec/sample-MNIST-autoencoder-5.png}}
       }
       \label{fig:mnist_autoencoder}
@@ -105,8 +101,8 @@ Training is unsupervised and we use the mean squared error loss function:
 \subsection{Adversarial Failure Classifier}
 To learn the low-dimensional features that are likely to cause failures, we train an adversary $\mathcal{A}$ in the validation loop to classify failures.
 The supervised adversary is trained on the partition $\tilde{\mathcal{D}}_\text{train}$ of the low-dimensional samples $\tilde{\mathbf{x}}$ and outputs a prediction that a given input would lead to a system failure.
-In order to get the target classifications $\mathbf{y}$, we use the system $\mathcal{S}$ to run the true inputs associated to the encoded inputs which are part of the training data $\tilde{\mathcal{D}}_\text{train}$. This gives us the targets we can now train our adversary on.
-Our adversarial loss function is the binary cross-entropy loss:
+We train the adversary on the low-dimensional representation for computational efficiency, rather than using the potentially high-dimensional input.
+To get the target labels $\mathbf{y}$, we run the system $\mathcal{S}$ using the \textit{true} inputs associated to the \textit{encoded} inputs which are part of the training data $\tilde{\mathcal{D}}_\text{train}$. This gives us targets we can now train our adversary on using the binary cross-entropy loss:
 \[
 \mathcal L_\mathcal{A}(\mathbf{\hat y}, \mathbf{y}) = -\frac{1}{m}\sum_{i=1}^m y_i\log(\hat y_i) - (1 - y_i)\log(1 - \hat y_i)
 \]
@@ -114,27 +110,12 @@ The adversarial network architecture consists of $3$ dense layers which map the 
 For each sampled validation iteration $t$ (shown in \Cref{fig:framework}), we retrain the adversary $\mathcal{A}$ for $20$ epochs using the Adam optimizer with learning rate $\alpha=3e^{-5}$. Notice that our learning rate is very small, this is so we do not overfit to early iterations in $t$ and can generalize across different samples of the low-dimensional space. The adversary will use the test data partition $\tilde{\mathcal{D}}_\text{test}$ to select the encoded input that it predicted would lead to a failure.
 We use the threshold of $\mathcal{A}(\tilde{x}) \ge 0.5$ to indicate the input $\tilde{x} \in \tilde{\mathcal{D}}_\text{test} \subset (\tilde{\mathbf{x}}, \mathbf{y})$ led to a failure.
 All encoded inputs in the test dataset that led to a failure are considered candidate failure scenarios, and we denote them as $\tilde{\mathbf{x}}_c$.
-We use a mapping from the encoded inputs $\tilde{\mathbf{x}}_c$ to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$, and finally pass the failure candidates to the true system $\mathcal{S}$ for actual evaluation.
-
-%%% TODO: Change Loss function m to n ???
-
-% We use the binary cross-entropy loss with an added factor $\Delta\softmax$ which is used as a distance metric to indicate the severity of a misclassification.
-% The $\Delta\softmax$ metric is defined as the difference between the $\softmax$ probability of the prediction $\mathbf{\hat y}$ and the $\softmax$ probability of the \textit{true target} as indicated by the prediction:
-% \[
-% \Delta\operatorname{softmax}(\mathbf y, \mathbf{\hat y}) =
-% \max\left(\operatorname{softmax}(\mathbf{\hat y})\right) -
-% \operatorname{softmax}(\mathbf{\hat y})^{\left[ \operatorname{argmax} \mathbf y \right]}
-% \]
+We use a mapping from the encoded inputs $\tilde{\mathbf{x}}_c$ to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$, and finally pass the failure candidates to the true system $\mathcal{S}$ for evaluation.
 
 
-% \subsection{Hyperparameters}
-% % Table with all hyperparams for E, A, and S (in separate tables)
-% % Describe the sensitivity of adversarial learning rate
-% \lipsum[13]
-
-
-\section{Experiments and Results}
+\section{Experiments and Results}\label{sec:weakness_experiments}
 \begin{table}[b]
+    \small
     \centering
     \caption{Evaluation Metrics}\label{tab:metrics}
     \begin{threeparttable}
@@ -153,35 +134,16 @@ We use a mapping from the encoded inputs $\tilde{\mathbf{x}}_c$ to the original 
     \end{threeparttable}
 \end{table}
 To evaluate our approach, we ran $T=10$ sampled validation iterations, sampling $m=500$ random encodings and partitioning these samples in half into $\tilde{\mathcal{D}}_\text{train}$ and $\tilde{\mathcal{D}}_\text{test}$ for the adversary.
-Because the failure rate for our system under test $\mathcal{S}$ is about $0.0677$, we augment the training dataset by duplicating the known failures $10$ times after running each training set through the system $\mathcal{S}$ to get the true outputs $\mathbf{y}_\text{train}$.
-We use two main metrics to evaluate the performance of the adversary: \textit{precision} and \textit{recall}. During each iteration $t$, we save off the current adversary $\mathcal{A}_t$ and evaluate the \textit{area under the ROC curve} (AUC) as shown in \Cref{fig:roc}. The ROC curve highlights incremental improvement of the adversary after each iteration. Note that we retrain the new adversary $\mathcal{A}_{t}$ starting from the network weights learning by the previous adversary $\mathcal{A}_{t-1}$.
-To balance between precision and recall, we swept over the prediction threshold to determine which threshold value to select (see \Cref{fig:sweep}).
-Based on this tuning sweep, we chose a threshold of $\hat y \ge 0.5$ to indicate a positive failure prediction by the adversary.
+Because the failure rate for our system under test is about $0.0677$, we augment the training dataset by duplicating known failures $10$ times after running each training set through the system to get the true outputs $\mathbf{y}_\text{train}$.
+We use \textit{precision} and \textit{recall} to evaluate the performance of the adversary. During each iteration $t$, we save off the current adversary $\mathcal{A}_t$ and evaluate the \textit{area under the ROC curve} (AUC) as shown in \Cref{fig:roc}. The ROC curve highlights incremental improvement of the adversary after each iteration. Note that we retrain the new adversary $\mathcal{A}_{t}$ starting from the network weights learning by the previous adversary $\mathcal{A}_{t-1}$.
+To balance these metrics, we swept over the prediction threshold to determine which threshold to use (see \Cref{fig:sweep}).
+From the tuning sweep, we chose a threshold of $\hat y \ge 0.5$ to indicate a positive failure prediction by the adversary.
 
-During each iteration $t$, the adversary selects $k$ candidate inputs predicted to be failures.
+During each iteration $t$, the adversary selects $k$ candidate inputs predicted to be likely failures.
 For comparison, we employ a random selection of $k$ candidates and evaluate the precision and recall metrics of the random scheme.
-This allows us to compare our adversarial learning approach to a baseline. \Cref{tab:metrics} quantifies the evaluation metrics for the adversary and random candidate selector.
+This allows us to compare our adversarial learning approach to a baseline and test that our approach is better than guessing randomly. \Cref{tab:metrics} quantifies the evaluation metrics for the adversary and random candidate selector.
 
 
-%% subfigure version.
-% \begin{figure}[ht]
-%     \centering
-%     \begin{subfigure}[t]{0.59\textwidth}
-%         \centering
-%         % \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/roc.pgf}}
-%         \caption{ROC curve and AUC for each adversary $\mathcal{A}_t$.}
-%         \label{fig:roc}
-%     \end{subfigure}
-%     \hfill
-%     \begin{subfigure}[t]{0.4\textwidth}
-%         \centering
-%         % \resizebox{\textwidth}{!}{\input{figures/weakness_rec/threshold_sweep.pgf}}
-%         \caption{Tuning prediction threshold.}
-%         \label{fig:sweep}
-%     \end{subfigure}
-%     \caption{ROC curve and evaluation metrics.}
-%     \label{fig:roc_and_metrics}
-% \end{figure}
 
 \begin{figure*}[t]
     \centering
@@ -199,100 +161,11 @@ This allows us to compare our adversarial learning approach to a baseline. \Cref
 \end{figure*}
 
 
-% \begin{figure}[ht]
-%     \centering
-%     \begin{subfigure}[t]{0.49\textwidth}
-%         \centering
-%         \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/confusion_sut.pgf}}
-%         \caption{TODO.}
-%         \label{fig:confusion_sut}
-%     \end{subfigure}
-%     \hfill
-%     \begin{subfigure}[t]{0.49\textwidth}
-%         \centering
-%         \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
-%         \caption{TODO.}
-%         \label{fig:confusion_adversary}
-%     \end{subfigure}
-%     \caption{Confusion matrices TODO}
-%     \label{fig:confusion}
-% \end{figure}
-
 \section{Analysis and Discussion}
-% \begin{wrapfigure}{r}{0.3\textwidth}
-%   \vspace{-30pt}
-%   \centering
-%   \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
-%   \caption{Confusion matrix.}
-%   \label{fig:confusion_adversary}
-% \end{wrapfigure}
-% \begin{figure}[ht]
-%   \centering
-%   \resizebox{0.5\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
-%   \caption{Confusion matrix.}
-%   \label{fig:confusion_adversary}
-% \end{figure}
-\begin{figure*}[ht]
-    \centering
-    \subfloat[Confusion matrix.]{%
-        \resizebox{0.45\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
-        \label{fig:confusion_adversary}
-    }
-    % \hspace{5mm}
-    \subfloat[Failure likelihood prediction per pixel.]{%
-        \resizebox{0.45\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
-        \label{fig:failure_likelihood}
-    }
-    \caption{Failure classifier performance and predictions.}
-    \label{fig:prediction_results}
-\end{figure*}
 Shown by the confusion matrix in \Cref{fig:confusion_adversary}, the adversarial failure classifier achieves about $0.24$ in precision and $0.23$ in recall.
 Compared to random, the precision rate is about $3$ times better using the adversary. Random recall---as expected---is around $0.5$.
 These results show that our approach learned the low-dimensional representation of a failure over the validation set, and based on this information it selected candidate failures to be evaluated.
-To see which element of the low-dimensional feature vector contributed the most to a likely failure as predicted by the adversary, we encoded a one-hot vector over $\mathbb{R}^{28\times28}$ (i.e. the input space) and plotted the output likelihood of failure for each of the pixels, shown in \Cref{fig:failure_likelihood}.
-
-% \begin{figure}[ht]
-% \centering
-% \resizebox{0.5\textwidth}{!}{%
-%     \input{figures/weakness_rec/failure-likelihood.pgf}
-% }
-% \caption{Failure likelihood prediction per pixel.}
-% \label{fig:failure_likelihood}
-% \end{figure}
-
-% THIS TAKES A WHILE TO COMPILE....
-% \begin{wrapfigure}{l}{0.3\textwidth}
-%   \centering
-%   \resizebox{0.3\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
-%   \caption{Failure likelihood.}
-%   \label{fig:failure_likelihood}
-% \end{wrapfigure}
-
-\Cref{fig:predictions} compares the failures classified by the adversary.
-For the true positives in \Cref{fig:true_positives}, the top row of digits are the $10$ digits with the highest predicted failure likelihood that were true failures, the middle row shows the feature that had the strongest influence on the failure classification (decoding a one-hot vector representation of the maximum of a $\softmax$ over low-dimensional inputs), and the bottom row shows the reconstructed digits after passing through the autoencoder.
-Similarly for the false negatives in \Cref{fig:false_negatives}, the top row are the $10$ digits with the lowest predicted failure likelihood that were true failures, the middle row shows the strongest influential feature, and the bottom row shows the output of the autoencoder. Notice that certain features in the middle row are shared among the other digits, indicating features that play a larger role in classifying failures.
-
-%%% TODO
-% \begin{figure}[ht]
-%     \centering
-%     \begin{subfigure}[t]{0.49\textwidth}
-%         \centering
-%         % \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/feature-likelihood.pgf}}
-%         \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
-%         \caption{TODO.}
-%         \label{fig:feature_likelihood}
-%     \end{subfigure}
-%     \hfill
-%     \begin{subfigure}[t]{0.49\textwidth}
-%         \centering
-%         \resizebox{\columnwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
-%         \caption{TODO.}
-%         \label{fig:failure_likelihood}
-%     \end{subfigure}
-%     \caption{Likelihoods}
-%     \label{fig:likelihoods}
-% \end{figure}
-
+To see which element of the low-dimensional feature vector contributed the most to a likely failure as predicted by the adversary, we encoded a one-hot vector over $\mathbb{R}^{28\times28}$ (i.e., the input space) and plotted the output likelihood of failure for each of the pixels, shown in \Cref{fig:failure_likelihood}.
 
 \begin{figure*}[ht]
     \centering
@@ -313,33 +186,26 @@ Similarly for the false negatives in \Cref{fig:false_negatives}, the top row are
 \end{figure*}
 
 
-% % subfigure version.
-% \begin{wrapfigure}{r}{0.3\textwidth}
-%      \vspace{-30pt}
-%      \centering
-%      \begin{subfigure}[t]{0.3\textwidth}
-%       \centering
-%       \centerline{\includegraphics[width=\textwidth]{figures/weakness_rec/MNIST-true-positives.png}}
-%       \caption{Adversarial true positives.}
-%       \label{fig:true_positives}
-%     \end{subfigure}
-%     \hfill
-%     \begin{subfigure}[t]{0.3\textwidth}
-%       \centering
-%       \centerline{\includegraphics[width=\textwidth]{figures/weakness_rec/MNIST-false-negatives.png}}
-%       \caption{Adversarial false negatives.}
-%       \label{fig:false_negatives}
-%     \end{subfigure}
-%     \caption{MNIST failure predictions from the adversary.}\label{fig:predictions}
-% \end{wrapfigure}
+\Cref{fig:predictions} compares the failures classified by the adversary.
+For the true positives in \Cref{fig:true_positives}, the top row of digits are the $10$ digits with the highest predicted failure likelihood that were true failures, the middle row shows the feature that had the strongest influence on the failure classification (decoding a one-hot vector representation of the maximum of a $\softmax$ over low-dimensional inputs), and the bottom row shows the reconstructed digits after passing through the autoencoder.
+Similarly for the false negatives in \Cref{fig:false_negatives}, the top row are the $10$ digits with the lowest predicted failure likelihood that were true failures, the middle row shows the strongest influential feature, and the bottom row shows the output of the autoencoder. Notice that certain features in the middle row are shared among the other digits, indicating features that play a larger role in classifying failures.
+
+\begin{figure*}[ht]
+    \centering
+    \subfloat[Confusion matrix.]{%
+        \resizebox{0.45\textwidth}{!}{\input{figures/weakness_rec/confusion_adversary.pgf}}
+        \label{fig:confusion_adversary}
+    }
+    \subfloat[Failure likelihood prediction per pixel.]{%
+        \resizebox{0.45\textwidth}{!}{\input{figures/weakness_rec/failure-likelihood.pgf}}
+        \label{fig:failure_likelihood}
+    }
+    \caption{Failure classifier performance and predictions.}
+    \label{fig:prediction_results}
+\end{figure*}
 
 
-\section{Future Work}
+\section{Discussion}
 To avoid exhaustively searching an entire validation set for failures, we show that an iterative framework that uses an adversarial failure classifier trained on low-dimensional representations of the inputs can select failures about $3$ times more likely than randomly choosing candidates to evaluate.
 To extend this framework, we could investigate different adversarial architectures, particularly around deep reinforcement learning.
 We could also explore how to take the true failures found, automatically improve the system under test, and then in a continual learning approach we could rerun this validation loop to use prior knowledge of previous system failures to find new system failures.
-
-% \section{Contributions}
-% Robert Moss consulted regularly with Bernard Lange, who is taking CS330 Meta Learning, regarding the project ideas.
-% Originally, Bernard and Robert were going to collaborate on this project but took different directions as the quarter progressed.
-% All of the work seen here (literature review, framework design, coding, training, analysis, plotting, and writing) was completed solely by Robert Moss.
