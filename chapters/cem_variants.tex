@@ -289,10 +289,10 @@ $\vec{s} = [+\sigma, -\sigma]$.
 We set the following default parameters: standard deviation $\sigma=3$, spread rate $\eta=6$, and cluster distance $\delta=2$.
 We can also control if the local minima clusters ``decay'', thus making those local minima less distinct (where $\text{decay} \in \{0, 1\})$.
 The parameters that define the sierra function are collected into $\vec{\theta} = \langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$.
-Using these parameters, we can define the mixture model used by the sierra function as:
-\begin{gather*}
-    \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\widetilde{\vec{\mu}}},\; \mathbf{\widetilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right) \quad\text{for}\quad (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
-\end{gather*}
+Using these parameters, we can define the mixture model with uniform weights used by the sierra function as:
+\begin{gather}
+    \Sierra \sim \operatorname{Mixture}\biggl(\underbrace{\Big\{ \vec{g} + s\vec{p}_i + \widetilde{\vec{\mu}} \mid (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s}) \Big\}}_{\text{component means}}, \underbrace{\Big\{ \widetilde{\mat{\Sigma}} \cdot i^{\text{decay}}/\eta \mid i \Big\}}_{\text{component covariances}} \mid \vec{\theta} \biggr)
+\end{gather}
 We add a final component to be our global minimum centered at $\mathbf{\widetilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E\left[\Normal(\mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}/(\sigma\eta))\right] = \mathbf{\widetilde{\vec{\mu}}}$.
 We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights (where $|\Sierra|$ denotes the number of components in the mixture model, i.e., 49):
 
