@@ -130,7 +130,7 @@ Formally, a Gaussian mixture model (GMM) is defined by its parameters $\vec{\mu}
 The probability density of the GMM then becomes:
 % Mixture model PDF
 \begin{gather*}
-    P( \mat{X} = \vec{x} ; \vec{\mu}, \mat{\Sigma}, \vec{w}) = \sum_{i=1}^n w_i \Normal(\vec{x} ; \vec{\mu}_i, \mat{\Sigma}_i)
+    p( \mat{X} = \vec{x} \mid \vec{\mu}, \mat{\Sigma}, \vec{w}) = \sum_{i=1}^n w_i \Normal(\vec{x} \mid \vec{\mu}_i, \mat{\Sigma}_i)
 \end{gather*}
 
 To fit the parameters of a Gaussian mixture model, it is well known that the \textit{expectation-maximization} (EM) algorithm can be used \cite{dempster1977maximum,aitkin1980mixture}. 
@@ -294,11 +294,11 @@ Using these parameters, we can define the mixture model used by the sierra funct
     \Sierra \sim \operatorname{Mixture}\left(\left\{ \vec{\theta} ~\Big|~ \Normal\left(\vec{g} +  s\vec{p}_i + \mathbf{\widetilde{\vec{\mu}}},\; \mathbf{\widetilde{\mat{\Sigma}}} \cdot i^{\text{decay}}/\eta \right) \right\} \right) \quad\text{for}\quad (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s})
 \end{gather*}
 We add a final component to be our global minimum centered at $\mathbf{\widetilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E\left[\Normal(\mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}/(\sigma\eta))\right] = \mathbf{\widetilde{\vec{\mu}}}$.
-We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights:
+We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights (where $|\Sierra|$ denotes the number of components in the mixture model, i.e., 49):
 
-\begin{align*}
-    \mathcal{S}(\vec{x}) &= -P(\Sierra = \vec{x}) = -\frac{1}{|\Sierra|}\sum_{j=1}^{n}\Normal(\vec{x} ; \vec{\mu}_j, \mat{\Sigma}_j)
-\end{align*}
+\begin{equation}
+    \mathcal{S}(\vec{x}) = -p(\vec{x}) = -\frac{1}{|\Sierra|}\sum_{j=1}^{n}\Normal(\vec{x} \mid \vec{\mu}_j, \mat{\Sigma}_j)
+\end{equation}
 An example of six different objective functions generated using the sierra function are shown in \cref{fig:sierra}, sweeping over the spread rate $\eta$, with and without decay.
 
 \subsection{Experimental Setup} \label{sec:cem_experiment_setup}
