@@ -58,7 +58,7 @@ We use a failure classifier as our adversary, and then predict which inputs led 
 \begin{figure}[t]
 \centering
 \resizebox{0.9\textwidth}{!}{%
-    \includegraphics[page=1]{figures/weakness_rec/validation_diagram.pdf}
+    \includegraphics[page=1]{diagrams/weakness_rec/validation_diagram.pdf}
 }
 \caption{Validation framework: a dataset autoencoder $\mathcal{E}$ is trained on the entire validation dataset $\mathcal{D}_\text{test}$ consisting of input samples $\mathbf{x}$. Then $m$ samples of encoded low-dimensional representations of the inputs $\tilde{\mathbf{x}}$ are selected for this iteration $t$, denoted $\tilde{\mathbf{x}}_t^{(1:m)}$ for all $m$ samples. The low-dimensional representations are then split into a training and test dataset. The training dataset $\tilde{\mathcal{D}}_\text{train}$ is used to train an adversarial failure classifier $\mathcal{A}$ on the encoded representations. Then the test dataset $\tilde{\mathcal{D}}_\text{test}$ is used to select candidate failures $\tilde{\mathbf{x}}_c$ as predicted by the adversary. Finally, the candidate failures from the adversary $\tilde{\mathbf{x}}_c$ are mapped back to the original inputs $\mathbf{x}_c \subseteq \mathbf{x}$ and evaluated by the system under test $\mathcal{S}$.}
 \label{fig:framework}
@@ -83,7 +83,7 @@ Training is unsupervised and we use the mean squared error loss function:
   \centering
     \subfloat[Dataset autoencoder architecture, with inputs $\mathbf{x} \in \mathbb{R}^{28\times28}$, encoded through a dense $\LeakyReLU$ layer of size $\frac{28\times28}{2}$ to a low-dimensional representation $\tilde{\mathbf{x}} \in \mathbb{R}^{64}$, then decoded through a $\LeakyReLU$ layer of size $\frac{28\times28}{2}$, outputting $\mathbf{x}' \in \mathbb{R}^{28\times28}$.]{%
       \resizebox{0.47\textwidth}{!}{
-        \includegraphics[page=1]{figures/weakness_rec/autoencoder-nn.pdf}
+        \includegraphics[page=1]{diagrams/weakness_rec/autoencoder-nn.pdf}
       }
       \label{fig:autoencoder_nn}
     }

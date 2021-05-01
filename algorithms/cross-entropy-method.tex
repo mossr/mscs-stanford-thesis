@@ -1,0 +1,14 @@
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{CrossEntropyMethod}{}($S, g, m, m_\text{elite}, k_\text{max}$)
+    \For {$k \in [1,\ldots,k_\text{max}]$}
+        \State $\mat{X} \sim g(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|g|\times m}$\algorithmiccomment{draw $m$ samples from $g$}
+        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using objective $S$}
+        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from objective}
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot\;; \vec{\theta}_k), \e)$ \algorithmiccomment{re-fit distribution $g$ using elite samples}
+    \EndFor
+    \State \Return $g(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:cem} Cross-entropy method.}
+\end{algorithm}

@@ -1,0 +1,15 @@
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{ModelEliteSet}{$\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite}$}
+    % Fit to entire population!
+    \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ \algorithmiccomment{fit a surrogate model to the samples} % Squared exponential, NelderMead
+    \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{|\M| \times {10m}}$ \algorithmiccomment{draw $10m$ samples from $\M$}
+    \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$ \algorithmiccomment{evaluate samples $\mat{X}_\text{m}$ using surrogate objective $\surrogate$}
+    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$ \algorithmiccomment{select model-elite samples from surrogate objective}
+    \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$ \algorithmiccomment{generate sub-elite samples using surrogate $\surrogate$}
+    \State $\bfE \leftarrow \{ \e \} \cup \{ \e_\text{model} \} \cup \{ \e_\text{sub} \}$ \algorithmiccomment{combine all elite samples into an elite set}
+    \State \Return $\bfE$
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:model_elite_set} Modeling elite set using a surrogate objective.}
+\end{algorithm}

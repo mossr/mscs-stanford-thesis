@@ -1,0 +1,10 @@
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{Fit}{$\M, \m, \bfE$}
+    \State $\M \leftarrow \operatorname{Mixture}( \m )$
+    \State $\mathbf{\hat{\vec{\theta}}} \leftarrow \textproc{ExpectationMaximization}(\M, \bfE)$
+    \State \Return $\M(\;\cdot\;; \mathbf{\hat{\vec{\theta}}})$
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:ce_mixture_fit} Fitting mixture models (used by CE-mixture).}
+\end{algorithm}

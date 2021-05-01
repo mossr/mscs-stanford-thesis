@@ -19,7 +19,7 @@ The reward function also uses the state transition probabilities to guide toward
 Reinforcement learning aims to maximize the discounted sum of expected rewards, therefore maximizing the sum of log-likelihoods is equivalent to maximizing the likelihood of a trajectory.
 A gray-box simulation environment steps the simulation and outputs the state transition probabilities, and the black-box system under test is evaluated in the simulator and outputs an event indication and the real-valued distance metric (i.e., how close we are to failure).
 To apply AST to a general black-box system, a user has to implement the following Julia interface:
-\input{algorithms/pomdp-stress-testing-interface}
+\input{algorithms/pomdp-stress-testing-interface.jl}
 
 
 Our package builds off work originally done in the AdaptiveStressTesting.jl package \cite{lee2019adaptive}, but POMDPStressTesting.jl adheres to the interface defined by POMDPs.jl and provides different action modes and solver types.
@@ -52,18 +52,18 @@ There has also been research on the use of POMDPStressTesting.jl for assessing t
 The CrossEntropyVariants.jl\footnote{\url{https://github.com/mossr/CrossEntropyVariants.jl}} package provides a general implementation of the algorithms introduced in \cref{cha:cem_variants}.
 Specifically, we provide the following algorithms that take an objective function $S$ and initial proposal distribution $\M$ as input, and output an optimized distribution $\M'$:
 
-\input{algorithms/cem-variants-functions}
+\input{algorithms/cem-variants-functions.jl}
 
 To illustrate why we found Julia to be our language of choice, below we present a slightly cleaned-up version of our actual implementation of \cref{alg:ce_surrogate} (i.e., the \textsc{CE-Surrogate} algorithm), noting the direct translation of the pseudocode into executable Julia code:
 
-\input{algorithms/ce-surrogate}
+\input{algorithms/ce-surrogate.jl}
 
 As an example, to run an simple optimization problem, consider the following code:
-\input{algorithms/cem-variants-usage}
+\input{algorithms/cem-variants-usage.jl}
 Here we select the \texttt{sierra} test function described in \cref{sec:sierra} and optimize a multivariate Gaussian proposal distribution $\mathbf{M}$ using a call to \texttt{ce\_surrogate}.
 
 The performance of the surrogate models may be dependent on the underlying objective function. The default surrogate model is a Gaussian process with the squared exponential kernel function, yet we provide other surrogate models including linear regression, polynomial regression, and radial basis regression. As an example, to use radial basis regression instead of a Gaussian process, you can specify a \texttt{basis} keyword input:
-\input{algorithms/cem-variants-usage-basis}
+\input{algorithms/cem-variants-usage-basis.jl}
 
 Our package relies an other open-source Julia software including Distributions.jl \cite{distributions.jl}, GaussianMixtures.jl,\footnote{\url{https://github.com/davidavdav/GaussianMixtures.jl}} GaussianProcesses.jl \cite{gaussianprocesses.jl}, and Optim.jl \cite{mogensen2018optim}. Their own open-source contributions enabled the quick prototyping of our software and we appreciate their effort and commitment to open-source software. We were inspired by \citefull{kochenderfer2019algorithms} and borrowed the \texttt{cross\_entropy\_method} algorithm from their work.
 

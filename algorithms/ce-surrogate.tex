@@ -1,13 +1,16 @@
-\begin{lstlisting}[language=JuliaLocal]
-function ce_surrogate(S, 𝐌; m, m_elite, k_max)
-    for k in 1:k_max
-        mₑ, m_elite = evaluation_schedule(k, k_max) # number of evaluations from a schedule
-        𝐗 = rand(𝐌, mₑ) # draw mₑ samples from 𝐌
-        𝐘 = map(S, eachcol(𝐗)) # evaluate samples 𝐗 using true objective S
-        𝐞 = 𝐗[:, sortperm(𝐘)[1:m_elite]] # select elite samples output from true objective
-        𝐄 = model_elite_set!(𝐗, 𝐘, 𝐌, 𝐞, m, m_elite) # find model-elites using a surrogate
-        𝐌 = fit(𝐌, 𝐄) # re-fit distribution 𝐌 using model-elite samples
-    end
-    return 𝐌
-end
-\end{lstlisting}
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{CE-Surrogate}{$S$, $\M$, $m$, $m_\text{elite}$, $k_\text{max}$}
+    \For {$k \in [1,\ldots,k_\text{max}]$}
+        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$ \algorithmiccomment{number of evaluations from a schedule}
+        \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|\M| \times m}$ \algorithmiccomment{draw $m$ samples from $\M$}
+        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using true objective $S$}
+        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from true objective}
+        \State $\bfE \leftarrow \textproc{ModelEliteSet}(\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite})$ \algorithmiccomment{find model-elites using a surrogate model}
+        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot\;; \vec{\theta}_k), \bfE)$ \algorithmiccomment{re-fit distribution $\M$ using model-elite samples}
+    \EndFor
+    \State \Return $\M(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:ce_surrogate} Cross-entropy surrogate method.}
+\end{algorithm}

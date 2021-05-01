@@ -120,20 +120,7 @@ This process is repeated for $k_\text{max}$ iterations and the resulting paramet
 Note that a variety of input distributions for $g$ are supported, but we focus on the multivariate Gaussian distribution and the Gaussian mixture model in this work.
 
 % CE-method
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{CrossEntropyMethod}{}($S, g, m, m_\text{elite}, k_\text{max}$)
-    \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $\mat{X} \sim g(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|g|\times m}$\algorithmiccomment{draw $m$ samples from $g$}
-        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using objective $S$}
-        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from objective}
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(g(\;\cdot\;; \vec{\theta}_k), \e)$ \algorithmiccomment{re-fit distribution $g$ using elite samples}
-    \EndFor
-    \State \Return $g(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:cem} Cross-entropy method.}
-\end{algorithm}
+\input{algorithms/cross-entropy-method}
 
 
 \subsection{Mixture Models}
@@ -206,22 +193,7 @@ Finally, the distribution $\M$ is fit to the elite set $\bfE$ and the distributi
 \vspace{5mm} % NOTE. To complement the \newpage below.
 
 % CE-surrogate
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{CE-Surrogate}{$S$, $\M$, $m$, $m_\text{elite}$, $k_\text{max}$}
-    \For {$k \in [1,\ldots,k_\text{max}]$}
-        \State $m, m_\text{elite} \leftarrow \textproc{EvaluationSchedule}(k, k_\text{max})$ \algorithmiccomment{number of evaluations from a schedule}
-        \State $\mat{X} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X} \in \R^{|\M| \times m}$ \algorithmiccomment{draw $m$ samples from $\M$}
-        \State $\mat{Y} \leftarrow S(\vec{x})$ for $\vec{x} \in \mat{X}$ \algorithmiccomment{evaluate samples $\mat{X}$ using true objective $S$}
-        \State $\e \leftarrow$ store top $m_\text{elite}$ from $\mat{Y}$ \algorithmiccomment{select elite samples output from true objective}
-        \State $\bfE \leftarrow \textproc{ModelEliteSet}(\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite})$ \algorithmiccomment{find model-elites using a surrogate model}
-        \State $\vec{\theta}_{k^\prime} \leftarrow \textproc{Fit}(\M(\;\cdot\;; \vec{\theta}_k), \bfE)$ \algorithmiccomment{re-fit distribution $\M$ using model-elite samples}
-    \EndFor
-    \State \Return $\M(\;\cdot\;; \vec{\theta}_{k_\text{max}})$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:ce_surrogate} Cross-entropy surrogate method.}
-\end{algorithm}
+\input{algorithms/ce-surrogate}
 
 \newpage % NOTE.
 
@@ -239,21 +211,7 @@ The surrogate model is then passed to \smallcaps{SubEliteSet}, which returns mor
 Finally, the elite set $\bfE$ is built from the true-elites $\e$, the model-elites $\e_\text{model}$, and the subcomponent-elites $\e_\text{sub}$.
 The resulting concatenated elite set $\bfE$ is returned.
 
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{ModelEliteSet}{$\mat{X}, \mat{Y}, \M, \e, m, m_\text{elite}$}
-    % Fit to entire population!
-    \State $\surrogate \leftarrow \textproc{GaussianProcess}(\mat{X}, \mat{Y}, \text{kernel}, \text{optimizer})$ \algorithmiccomment{fit a surrogate model to the samples} % Squared exponential, NelderMead
-    \State $\mat{X}_\text{m} \sim \M(\;\cdot\;; \vec{\theta}_k)$ where $\mat{X}_\text{m} \in \R^{|\M| \times {10m}}$ \algorithmiccomment{draw $10m$ samples from $\M$}
-    \State $\mathbf{\hat{\mat{Y}}}_\text{m} \leftarrow \surrogate(\vec{x}_\text{m})$ for $\vec{x}_\text{m} \in \mat{X}_\text{m}$ \algorithmiccomment{evaluate samples $\mat{X}_\text{m}$ using surrogate objective $\surrogate$}
-    \State $\e_\text{model} \leftarrow$ store top $10m_\text{elite}$ from $\mathbf{\hat{\mat{Y}}}_\text{m}$ \algorithmiccomment{select model-elite samples from surrogate objective}
-    \State $\e_\text{sub} \leftarrow \textproc{SubEliteSet}(\surrogate, \M, \e)$ \algorithmiccomment{generate sub-elite samples using surrogate $\surrogate$}
-    \State $\bfE \leftarrow \{ \e \} \cup \{ \e_\text{model} \} \cup \{ \e_\text{sub} \}$ \algorithmiccomment{combine all elite samples into an elite set}
-    \State \Return $\bfE$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:model_elite_set} Modeling elite set using a surrogate objective.}
-\end{algorithm}
+\input{algorithms/model-elite-set}
 
 To encourage exploration of promising areas of the design space, the algorithm \smallcaps{SubEliteSet} focuses on the already marked true-elites $\e$.
 Each elite $e_x \in \e$ is used as the mean of a new multivariate Gaussian distribution with covariance inherited from the distribution $\M$.
@@ -264,20 +222,7 @@ Then the best objective function value is added to the subcomponent-elite set $\
 Note that we use $\theta_\text{CE}$ to denote the parameters for the CE-method algorithm.
 In our case, we recommend using a small $k_\text{max}$ of around $2$ so the subcomponent-elites do not over-fit to the surrogate model but have enough CE-method iterations to tend towards optimal.
 
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{SubEliteSet}{$\surrogate, \M, \e$}
-    \State $\e_\text{sub} \leftarrow \emptyset$
-    \State $\m \leftarrow \{ e_x \in \e \mid \Normal(e_x, \M.\Sigma) \}$ \algorithmiccomment{create set of distributions centered at each true-elite sample}
-    \For {$\m_i \in \m$}
-        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i ; \theta_{\text{CE}})$ \algorithmiccomment{run CE-method over each new distribution}
-        \State $\e_\text{sub} \leftarrow \{\e_\text{sub}\} \cup \{\textproc{Best}(\m_i)\}$ \algorithmiccomment{append best result into the sub-elite set}
-    \EndFor
-    \State \Return $\e_\text{sub}$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:sub_elite_set} Subcomponent elite set.}
-\end{algorithm}
+\input{algorithms/sub-elite-set}
 
 
 \subsection{Cross-Entropy Mixture Method} \label{sec:cem_alg_ce_mixture}
@@ -291,17 +236,7 @@ Therefore, we would expect better performance of the CE-mixture method when the 
 Results in \cref{sec:cem_results} aim to show this behavior.
 
 % CE-mixture (fit)
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{Fit}{$\M, \m, \bfE$}
-    \State $\M \leftarrow \operatorname{Mixture}( \m )$
-    \State $\mathbf{\hat{\vec{\theta}}} \leftarrow \textproc{ExpectationMaximization}(\M, \bfE)$
-    \State \Return $\M(\;\cdot\;; \mathbf{\hat{\vec{\theta}}})$
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:ce_mixture_fit} Fitting mixture models (used by CE-mixture).}
-\end{algorithm}
-
+\input{algorithms/ce-mixture-fit}
 
 \subsection{Evaluation Scheduling} \label{sec:cem_alg_eval_schedule}
 Given the nature of the CE-method, we expect the covariance to shrink over time, thus resulting in a solution with higher confidence.
@@ -316,25 +251,8 @@ We denote $G \sim \Geo(p)$ to be a random variable that follows a truncated Geom
 Note the use of the integer rounding function (e.g., $\round{x}$), which we later have to compensate for the final iterations.
 Results in \cref{sec:cem_results} compare values of $p$ that control the redistribution of evaluations.
 
-
 % EvaluationSchedule
-\begin{algorithm}[ht]
-  \begin{algorithmic}
-  \Function{EvaluationSchedule}{$k, k_\text{max}$}
-    \State $G \sim \Geo(p)$
-    \State $N_\text{max} \leftarrow k_\text{max} \cdot m$
-    \State $m \leftarrow \round{N_\text{max} \cdot p_G(k)}$
-    \If{$k = k_\text{max}$}
-        \State $s \leftarrow \displaystyle\sum_{i=1}^{k_\text{max}-1} \round{N_\text{max} \cdot p_G(i)}$
-        \State $m \leftarrow \min(N_\text{max} - s, N_\text{max} - m)$
-    \EndIf
-    \State $m_\text{elite} \leftarrow \min(m_\text{elite}, m)$
-    \State \Return ($m, m_\text{elite}$) 
-  \EndFunction
-  \end{algorithmic}
-  \caption{\label{alg:evaluation_schedule} Evaluation schedule using a Geometric distribution.}
-\end{algorithm}
-
+\input{algorithms/evaluation-schedule}
 
 \section{Experiments} \label{sec:cem_experiments}
 In this section, we detail the experiments we ran to compare the CE-method variants and evaluation schedules.

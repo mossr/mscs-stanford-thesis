@@ -1,0 +1,14 @@
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{SubEliteSet}{$\surrogate, \M, \e$}
+    \State $\e_\text{sub} \leftarrow \emptyset$
+    \State $\m \leftarrow \{ e_x \in \e \mid \Normal(e_x, \M.\Sigma) \}$ \algorithmiccomment{create set of distributions centered at each true-elite sample}
+    \For {$\m_i \in \m$}
+        \State $\m_i \leftarrow \textproc{CrossEntropyMethod}(\surrogate, \m_i ; \theta_{\text{CE}})$ \algorithmiccomment{run CE-method over each new distribution}
+        \State $\e_\text{sub} \leftarrow \{\e_\text{sub}\} \cup \{\textproc{Best}(\m_i)\}$ \algorithmiccomment{append best result into the sub-elite set}
+    \EndFor
+    \State \Return $\e_\text{sub}$
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:sub_elite_set} Subcomponent elite set.}
+\end{algorithm}

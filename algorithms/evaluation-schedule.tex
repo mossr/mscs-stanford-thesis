@@ -1,0 +1,16 @@
+\begin{algorithm}[ht]
+  \begin{algorithmic}
+  \Function{EvaluationSchedule}{$k, k_\text{max}$}
+    \State $G \sim \Geo(p)$
+    \State $N_\text{max} \leftarrow k_\text{max} \cdot m$
+    \State $m \leftarrow \round{N_\text{max} \cdot p_G(k)}$
+    \If{$k = k_\text{max}$}
+        \State $s \leftarrow \displaystyle\sum_{i=1}^{k_\text{max}-1} \round{N_\text{max} \cdot p_G(i)}$
+        \State $m \leftarrow \min(N_\text{max} - s, N_\text{max} - m)$
+    \EndIf
+    \State $m_\text{elite} \leftarrow \min(m_\text{elite}, m)$
+    \State \Return ($m, m_\text{elite}$) 
+  \EndFunction
+  \end{algorithmic}
+  \caption{\label{alg:evaluation_schedule} Evaluation schedule using a Geometric distribution.}
+\end{algorithm}

@@ -65,7 +65,7 @@ AST can also be formulated more generally as other sequential decision making pr
 % AST formulation (MDP)
 \begin{figure}[!ht]
 \centering
-\resizebox{0.85\columnwidth}{!}{\input{diagrams/standard-ast-formulation.tex}}
+\resizebox{0.85\columnwidth}{!}{\input{diagrams/episodic_ast/standard-ast-formulation.tex}}
 \caption{Adaptive stress testing formulation.}
 \label{fig:ast_mdp}
 \end{figure}
@@ -118,7 +118,7 @@ The outputs of the trajectory predictor are illustrated in \cref{fig:lateral_pac
 \begin{figure*}[!t]
 % Lateral packet diagram
 \centering
-\resizebox{0.78\textwidth}{!}{\input{diagrams/lateral-packet.tex}}
+\resizebox{0.78\textwidth}{!}{\input{diagrams/episodic_ast/lateral-packet.tex}}
 \caption{Lateral packets output by the trajectory predictor. Lateral packets consist of latitude and longitude points that describe straight line segments $\ell_i$ and turning arc segments starting at $s_i$. Straight segments are optional which can result in multiple turn segments sequenced together, as seen at $s_3$ and $s_4$.}
 \label{fig:lateral_packets}
 \end{figure*}
@@ -138,7 +138,7 @@ Modifications to the Monte Carlo tree search algorithm are also described; adapt
 % Modified AST formulation (MDP)
 \begin{figure*}[!b]
   \centering
-  \resizebox{0.95\textwidth}{!}{\input{diagrams/ast-formulation.tex}}
+  \resizebox{0.95\textwidth}{!}{\input{diagrams/episodic_ast/ast-formulation.tex}}
   \caption{
     \label{fig:ast_mdp_modified}
     Modified adaptive stress testing formulation for the trajectory predictor with episodic reward. The simulation environment samples waypoints from a distribution and passes those waypoints as input to the SUT at the end of the rollout.
@@ -185,7 +185,7 @@ The tree $\mathcal{T}$ is iteratively expanded and the policy improves over time
 % MCTS 4-step figure
 \begin{figure*}[!t]
 \centering
-\resizebox{\textwidth}{!}{\input{diagrams/mcts-diagram.tex}}
+\resizebox{\textwidth}{!}{\input{diagrams/episodic_ast/mcts-diagram.tex}}
 \caption{The four steps of the Monte Carlo tree search algorithm.}
 \label{fig:mcts}
 \end{figure*}
@@ -193,7 +193,7 @@ The tree $\mathcal{T}$ is iteratively expanded and the policy improves over time
 % MCTS-PW figure
 \begin{figure}[!b]
 \centering
-\resizebox{0.5\textwidth}{!}{\input{diagrams/mcts-pw.tex}}
+\resizebox{0.5\textwidth}{!}{\input{diagrams/episodic_ast/mcts-pw.tex}}
 \caption{MCTS-PW with deterministic next states and SUT evaluated at the end of the rollout.}
 \label{fig:mcts_pw}
 \end{figure}
@@ -288,7 +288,7 @@ The following failure event and miss distance is calculated by parsing the SUT o
 
 \begin{figure}[!hb]
 \centering
-\resizebox{0.7\columnwidth}{!}{\input{diagrams/arc-length.tex}}
+\resizebox{0.7\columnwidth}{!}{\input{diagrams/episodic_ast/arc-length.tex}}
 \caption{Arc length $\beta$ and calculated arc length $\alpha r$, showing a failure in red.}
 \label{fig:arc_length}
 \end{figure}
@@ -496,11 +496,11 @@ These failures are encoded in input files than can be deterministically played b
 \begin{figure*}[!t]
   \centering
     \subfloat[Full trajectory of an example arc length failure originating from KSFO. Red diamonds indicate the input waypoints selected by MCTS and the yellow circles indicate the output lateral packets from the SUT. The red box shows where the failure occurs, shown in more detail in \cref{fig:example_failure_zoomed}.]{%
-    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/dasc-failure.pgf}}
+    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/example-failure.pgf}}
     \label{fig:example_failure}}
     \hspace{2mm}
     \subfloat[Example arc length failure, zoomed in from \cref{fig:example_failure}. Notice two almost identical red waypoint diamonds, which are separated by about 0.08 \si{nmi} or about 486 \si{ft} (zoom in further for more detail). The arc length failure is shown as the extending arc after the center yellow waypoint, which extends about 3 \si{nmi} past its intended end waypoint. This extension is the negative miss distance.]{%
-    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/dasc-failure-zoomed.pgf}}
+    \resizebox{0.47\textwidth}{!}{\input{figures/episodic_ast/example-failure-zoomed.pgf}}
     \label{fig:example_failure_zoomed}}
   \caption{
     \label{fig:example_failure_full} Example failure found by adaptive stress testing. 
