@@ -348,7 +348,7 @@ We employ the navigational database as a baseline by sampling the same allotted 
 \label{sec:ast_experiments}
 Experiments were run to test the AST approach using MCTS-PW against direct Monte Carlo (MC) simulations as a na\"ive baseline and the cross-entropy method as an importance sampling baseline.
 We also perform Monte Carlo sampling over the routes in the navigational database as another baseline.
-Algorithm \ref{alg:mc} describes the direct Monte Carlo simulation approach for $n$ episodes, starting at an initial state $s_0$, with a rollout depth $d$. Note the rollout function does not use the action feeding procedure described in \cref{sec:ast_mcts}.
+Algorithm \ref{alg:mc} describes the direct Monte Carlo simulation approach for $n$ episodes, starting at an initial state $s_0$, with a rollout depth $d$. Note this rollout function does not exploit the best action as described in \cref{sec:ast_mcts}.
 
 \input{algorithms/monte-carlo-algorithm.tex}
 
@@ -469,8 +469,8 @@ The CEM approach finds a small number of failures with very low relative likelih
 This is because CEM is using importance sampling and after re-weighting the samples using the true distribution, we would expect to get these extremely small likelihood values.
 AST has the lowest mean miss distance $\bar{X}_d$, noting the large standard deviation which is a result of large differences between miss distances from failure and non-failure events.
 Each approach finds their first failure early in the experiment, with AST finding failures the earliest.
-The effect of feeding the best action midway through the rollout accelerates finding these failures.
-Once found, AST will exploit the failures to maximize their likelihood.
+The effect of exploiting the best action midway through the rollout accelerates finding these failures.
+Once found, AST will optimize the failures to maximize their likelihood.
 We see that AST finds failures in about $88\%$ of episodes (i.e., system executions), where as standard MC and CEM find failures in about $0.1\%$ and $0.48\%$ of episodes, respectively.
 
 
@@ -519,7 +519,7 @@ Further extensions of this work include searching for other failure events and s
 \label{sec:ast_discussion}
 Adaptive stress testing was extended for sequential systems with episodic reward to find likely failures in FMS trajectory predictors.
 To improve search performance, we used Monte Carlo tree search with progressive widening and modified the rollout with end-of-depth evaluations.
-We feed the best action midway through the rollout to encourage exploration of promising actions, resulting in exploiting failures to maximize their likelihood. 
+We replace the current with the best action midway through the rollout to encourage further exploration of promising actions, resulting in exploiting failures to maximize their likelihood. 
 A simulation environment was constructed to evaluate the trajectory predictor, and a navigational database was sampled to compare to existing methods of finding failures during development.
 Performance of AST using MCTS-PW was compared against direct Monte Carlo simulations and the cross-entropy method.
 Results suggest that the AST approach finds more failures with both higher severity and higher relative likelihood.

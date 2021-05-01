@@ -162,12 +162,9 @@ A Gaussian process (GP) is a distribution over functions that predicts the under
 This means a GP can be sampled to generate random functions, which can then be fit to our given data $\mat{X}$.
 A Gaussian process is parameterized by a mean function $\m(\mat{X})$ and kernel function $\mat{K}(\mat{X},\mat{X})$, which captures the relationship between data points as covariance values.
 We denote a Gaussian process that produces estimates $\hat{\vec{y}}$ as:
-\begin{align*}
-\hat{\vec{y}} &\sim\mathcal{N}\left(\vec{m}(\mat{X}),\vec{K}(\mat{X},\mat{X})\right)\\
-        &= \begin{bmatrix} % Changed `m` to `n`
-            \hat{S}(\vec{x}_1), \ldots, \hat{S}(\vec{x}_n)
-        \end{bmatrix}
-\end{align*}
+\begin{equation*}
+\hat{\vec{y}} \sim\mathcal{N}\left(\vec{m}(\mat{X}),\vec{K}(\mat{X},\mat{X})\right)
+\end{equation*}
 where
 \begin{gather*}
 \vec{m}(\mat{X}) = \begin{bmatrix} m(\vec{x}_1), \ldots, m(\vec{x}_n) \end{bmatrix}\\
@@ -179,7 +176,6 @@ where
 \end{gather*}
 Note that we use the zero-mean function $m(\vec{x}_i) = \vec{0}$, which is generally conventional.
 For the kernel function $k(\vec{x}_i, \vec{x}_i)$, we use the squared exponential kernel with variance $\sigma^2$ and characteristic scale-length $\ell$, where larger $\ell$ values increase the correlation between successive data points, thus smoothing out the generated functions. The squared exponential kernel is defined as:
-% Isotropic Squared Exponential kernel (covariance): \exp(-\frac{r^2}{2\ell^2})
 \begin{align*}
 k(\vec{x},\vec{x}^\prime) = \sigma^2\exp\left(- \frac{(\vec{x} - \vec{x}^\prime)^\top(\vec{x} - \vec{x}^\prime)}{2\ell^2}\right)
 \end{align*}
@@ -529,7 +525,7 @@ Notice that the results of experiment (1C) shown in \cref{fig:experiment_1c} fol
     \small
     \centering
     \caption{\label{tab:cem_results} Experimental Results.}
-    \begin{tabular}{cllll} % p{3cm}
+    \begin{tabular}{cllll}
     \toprule
     \textbf{Exper.} & \textbf{Algorithm} & \textbf{Runtime} & $\bar{b}_v$ & $\bar{b}_d$\\
     \midrule

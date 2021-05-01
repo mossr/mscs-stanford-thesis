@@ -110,6 +110,9 @@
 %   changed "dissertation" to "thesis"
 %   removed "committee of graduate studies" mentions
 
+% Modified Apr 2021 by Robert Moss
+%   removed signature lines and bolded advisor names
+
 %%%%%
 %%%%%   PRELIMS
 %%%%%
@@ -453,7 +456,7 @@ smaller print.
 
 
 \newlength{\signaturespace}
-\setlength{\signaturespace}{.5in}
+\setlength{\signaturespace}{.1in}
 
 
 \long\def\signature#1{%
@@ -466,8 +469,9 @@ of Master of Science.
 \par
 \vspace{\signaturespace}
 %\hbox to 4in{\hfil\shortstack{\vrule width 3in height 0.4pt\\ #1}}
-\hbox to 5in{\hfil\begin{tabular}{@{}l@{}}\vrule width 3in height
-    0.4pt depth 0pt\\ #1\end{tabular}}
+%\hbox to 5in{\hfil\begin{tabular}{@{}l@{}}\vrule width 3in height
+%    0.4pt depth 0pt\\ #1\end{tabular}}
+#1
 \end{minipage}
 \end{flushright}}
 
@@ -490,25 +494,25 @@ of Master of Science.
 \def\thepage{}
 \thispagestyle{myheadings}
 \markboth{\rm \@author}{\rm \@author}\fi
-\signature{(\@principaladviser)\quad Principal \advis@r}
+\signature{\hfill\textbf{\@principaladviser, Principal \advis@r}}
   \vfill
 % if second principal advisor
         \if*\@coprincipaladviser \else
-        \signature{(\@coprincipaladviser)\quad Principal \advis@r}
+        \signature{\hfill\textbf{\@coprincipaladviser, Principal \advis@r}}
         \vfill\fi
         \if*\@firstreader \else 
-        \signature{(\@firstreader)}
+        \signature{\hfill\textbf{\@firstreader}}
         \vfill\fi
         \if*\@secondreader \else 
-        \signature{(\@secondreader)}
+        \signature{\hfill\textbf{\@secondreader}}
         \vfill\fi
 % if thirdreader then do \signature\@thirdreader \vfill
         \if*\@thirdreader \else 
-        \signature{(\@thirdreader)}
+        \signature{\hfill\textbf{\@thirdreader}}
         \vfill\fi
 % if fourthreader then do \signature\@fourthreader \vfill
         \if*\@fourthreader \else 
-        \signature{(\@fourthreader)}
+        \signature{\hfill\textbf{\@fourthreader}}
         \vfill\fi
 }
 

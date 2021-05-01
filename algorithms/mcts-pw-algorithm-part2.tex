@@ -37,7 +37,7 @@
     \State $\bar{a}^* \leftarrow \textproc{UpdateBestAction}(s,Q)$
     \State \Return $R(p,e,d,\tau)$
   \ElsIf {$d = \floor{d_\text{max}/2}$}
-    \State $\bar{a} \leftarrow \bar{a}^*$ \algorithmiccomment{feed best action}
+    \State $\bar{a} \leftarrow \bar{a}^*$ \algorithmiccomment{exploit the best action}
   \Else
       \State $\bar{a} \leftarrow \textproc{SampleAction}(s,Q)$
   \EndIf
