@@ -282,13 +282,13 @@ Next, we use the parameter $\delta$ to control the clustered distance between sy
 \end{align*}
 We chose points $\mat{P}$ to fan out the clustered minima relative to the center defined by $\mathbf{\widetilde{\vec{\mu}}}$:
 \begin{align*}
-    \mat{P} &= \Big\{[0, 0], [1, 1], [2, 0], [3, 1], [0, 2], [1, 3]\Big\}
+    \mat{P} &= \Big\{[0, 0], [1, 1], [2, 0], [0, 2], [3, 1], [1, 3]\Big\}
 \end{align*}
 The vector $\vec{s}$ is used to control the $\pm$ distance to create an `s' shape comprised of minima, using the standard deviation $\sigma$:
 $\vec{s} = [+\sigma, -\sigma]$.
 We set the following default parameters: standard deviation $\sigma=3$, spread rate $\eta=6$, and cluster distance $\delta=2$.
 We can also control if the local minima clusters ``decay'', thus making those local minima less distinct (where $\text{decay} \in \{0, 1\})$.
-Using the parameters $\langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$, we can define the sierra mixture model with the set of component means $\vec{\mu}_\mathcal{S}$, component covariances $\mat{\Sigma}_\mathcal{S}$, and weights $\vec{w}_\mathcal{S}$ as:
+Using the parameters $\langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s}, \eta, \text{decay} \rangle$, we can define the sierra mixture model with the set of component means $\vec{\mu}_\mathcal{S}$, component covariances $\mat{\Sigma}_\mathcal{S}$, and weights $\vec{w}_\mathcal{S}$ as:
 \begin{align*}
     \vec{\mu}_\mathcal{S} &= \Big\{ \vec{g} + s\vec{p}_i + \widetilde{\vec{\mu}} \mid \vec{g} \in \mat{G}, s \in \vec{s}, \vec{p}_i \in \mat{P} \Big\}\tag{component means}\\
     \mat{\Sigma}_\mathcal{S} &= \Big\{ \widetilde{\mat{\Sigma}} \cdot i^{\text{decay}}/\eta \mid i \in \{1,\ldots,|\mat{P}|\} \Big\}\tag{component covariances}\\
