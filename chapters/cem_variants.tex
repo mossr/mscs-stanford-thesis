@@ -261,16 +261,16 @@ We then describe the experimental setup for each of our experiments and provide 
 
 
 \subsection{Test Objective Function Generation}\label{sec:sierra}
+To stress the cross-entropy method and its variants, we created a test objective function called \textit{sierra} that is generated from a mixture model comprised of $49$ multivariate Gaussian distributions.
+We chose this construction so that we can use the negative peeks of the component distributions as local minima and can force a global minimum centered at our desired $\mathbf{\widetilde{\vec{\mu}}}$.
 \begin{figure*}[!t]
   \centering
-  \resizebox{0.8\textwidth}{!}{\input{figures/cem_variants/sierra_group.tex}}
+  \resizebox{0.7\textwidth}{!}{\input{figures/cem_variants/sierra_group.tex}}
   \caption{
     \label{fig:sierra}
     Example test objective functions generated using the sierra function.  
   }
 \end{figure*}
-To stress the cross-entropy method and its variants, we created a test objective function called \textit{sierra} that is generated from a mixture model comprised of $49$ multivariate Gaussian distributions.
-We chose this construction so that we can use the negative peeks of the component distributions as local minima and can force a global minimum centered at our desired $\mathbf{\widetilde{\vec{\mu}}}$.
 The construction of the sierra test function can be controlled by parameters that define the spread of the local minima.
 We first start with the center defined by a mean vector $\mathbf{\widetilde{\vec{\mu}}}$ and we use a common covariance $\mathbf{\widetilde{\mat{\Sigma}}}$:
 \begin{align*}
@@ -278,26 +278,27 @@ We first start with the center defined by a mean vector $\mathbf{\widetilde{\vec
 \end{align*}
 Next, we use the parameter $\delta$ to control the clustered distance between symmetric points:
 \begin{align*}
-    \mat{G} &= \left\{[+\delta, +\delta], [+\delta, -\delta], [-\delta, +\delta], [-\delta, -\delta]\right\}
+    \mat{G} &= \Big\{[+\delta, +\delta], [+\delta, -\delta], [-\delta, +\delta], [-\delta, -\delta]\Big\}
 \end{align*}
 We chose points $\mat{P}$ to fan out the clustered minima relative to the center defined by $\mathbf{\widetilde{\vec{\mu}}}$:
 \begin{align*}
-    \mat{P} &= \left\{[0, 0], [1, 1], [2, 0], [3, 1], [0, 2], [1, 3]\right\}
+    \mat{P} &= \Big\{[0, 0], [1, 1], [2, 0], [3, 1], [0, 2], [1, 3]\Big\}
 \end{align*}
 The vector $\vec{s}$ is used to control the $\pm$ distance to create an `s' shape comprised of minima, using the standard deviation $\sigma$:
 $\vec{s} = [+\sigma, -\sigma]$.
 We set the following default parameters: standard deviation $\sigma=3$, spread rate $\eta=6$, and cluster distance $\delta=2$.
 We can also control if the local minima clusters ``decay'', thus making those local minima less distinct (where $\text{decay} \in \{0, 1\})$.
-The parameters that define the sierra function are collected into $\vec{\theta} = \langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$.
-Using these parameters, we can define the mixture model with uniform weights used by the sierra function as:
-\begin{gather}
-    \Sierra \sim \operatorname{Mixture}\biggl(\underbrace{\Big\{ \vec{g} + s\vec{p}_i + \widetilde{\vec{\mu}} \mid (\vec{g}, \vec{p}_i, s) \in (\mat{G}, \mat{P}, \vec{s}) \Big\}}_{\text{component means}}, \underbrace{\Big\{ \widetilde{\mat{\Sigma}} \cdot i^{\text{decay}}/\eta \mid i \Big\}}_{\text{component covariances}} \mid \vec{\theta} \biggr)
-\end{gather}
+Using the parameters $\langle \mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}, \mat{G}, \mat{P}, \vec{s} \rangle$, we can define the sierra mixture model with the set of component means $\vec{\mu}_\mathcal{S}$, component covariances $\mat{\Sigma}_\mathcal{S}$, and weights $\vec{w}_\mathcal{S}$ as:
+\begin{align*}
+    \vec{\mu}_\mathcal{S} &= \Big\{ \vec{g} + s\vec{p}_i + \widetilde{\vec{\mu}} \mid \vec{g} \in \mat{G}, s \in \vec{s}, \vec{p}_i \in \mat{P} \Big\}\tag{component means}\\
+    \mat{\Sigma}_\mathcal{S} &= \Big\{ \widetilde{\mat{\Sigma}} \cdot i^{\text{decay}}/\eta \mid i \in \{1,\ldots,|\mat{P}|\} \Big\}\tag{component covariances}\\
+    \vec{w}_\mathcal{S} &= \Big\{ 1/m \mid m = |\mat{G}|\cdot|\vec{s}|\cdot|\mat{P}| + 1  \Big\}\tag{uniform component weights}
+\end{align*}
 We add a final component to be our global minimum centered at $\mathbf{\widetilde{\vec{\mu}}}$ and with a covariance scaled by $\sigma\eta$. Namely, the global minimum is $\vec{x}^* = \E\left[\Normal(\mathbf{\widetilde{\vec{\mu}}}, \mathbf{\widetilde{\mat{\Sigma}}}/(\sigma\eta))\right] = \mathbf{\widetilde{\vec{\mu}}}$.
-We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights (where $|\Sierra|$ denotes the number of components in the mixture model, i.e., 49):
+We can now use this constant mixture model with $49$ components and define the sierra objective function $\mathcal{S}(\vec{x})$ to be the negative probability density of the mixture at input $\vec{x}$ with uniform weights (where $m=49$ denotes the number of components in the mixture model):
 
 \begin{equation}
-    \mathcal{S}(\vec{x}) = -p(\vec{x}) = -\frac{1}{|\Sierra|}\sum_{j=1}^{n}\Normal(\vec{x} \mid \vec{\mu}_j, \mat{\Sigma}_j)
+    \mathcal{S}(\vec{x}) = -p(\vec{x}) = -\frac{1}{m}\sum_{j=1}^{n}\Normal(\vec{x} \mid \vec{\mu}_j, \mat{\Sigma}_j)
 \end{equation}
 An example of six different objective functions generated using the sierra function are shown in \cref{fig:sierra}, sweeping over the spread rate $\eta$, with and without decay.
 
