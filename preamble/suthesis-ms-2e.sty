@@ -113,12 +113,16 @@
 % Modified Apr 2021 by Robert Moss
 %   removed signature lines and bolded advisor names
 
+% Modified May 2021 by Robert Moss
+%   replace signature page with signed PDF page (\signedpdfpage{})
+
 %%%%%
 %%%%%   PRELIMS
 %%%%%
 
 \ProvidesPackage{suthesis-ms-2e}[2014/05/26]
-
+\usepackage{pdfpages}
+\usepackage{ifthen}
 
 
 %%\typeout{Document Style Option `suthesis' for latex2e <$Date: 9/17/2008 $>.}
@@ -344,6 +348,8 @@ smaller print.
 \def\@coprincipaladviser{*}
 \def\@thirdreader{*}
 \def\@fourthreader{*}
+\def\signedpdfpage#1{\gdef\@signedpdfpage{#1}}
+\def\@signedpdfpage{*}
 \def\@submitdate{\ifcase\the\month\or
   January\or February\or March\or April\or May\or June\or
   July\or August\or September\or October\or November\or December\fi
@@ -514,6 +520,12 @@ of Master of Science.
         \if*\@fourthreader \else 
         \signature{\hfill\textbf{\@fourthreader}}
         \vfill\fi
+  \vfill
+  \textit{This signature page was generated electronically upon submission of this thesis in electronic format. An original signed copy of the signature page is on file at Stanford University.}
+}
+
+\def\insertedsignaturepage{%
+\includepdf[height=\paperheight,width=\paperwidth]{\@signedpdfpage}
 }
 
 \def\onlinesignature{
@@ -531,7 +543,9 @@ of Master of Science.
 % signature page should come at end
         \ifonline\setcounter{page}{4}\else
         \ifcopyright\ifthesiscopyright\thesiscopyrightpage\else\tradcopyrightpage\fi\fi
-        \signaturepage\fi
+        \ifthenelse{\equal{\@signedpdfpage}{\string *}}
+        {\signaturepage}{\insertedsignaturepage}
+        \fi
         \cleardoublepage}
         
 
